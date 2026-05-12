@@ -519,40 +519,216 @@ def _bourse() -> dict:
 
 # ══════════════════════════════════════════════════════════════════
 # CRYPTO — indicateurs backend (complète le frontend CoinGecko/Alternative.me)
+# Sources : Bitbo API (public) · Binance API · yfinance
 # ══════════════════════════════════════════════════════════════════
+
+BITBO_KEY = os.getenv("BITBO_API_KEY", "")   # optionnel — fonctionne sans clé
+
+def _bitbo(endpoint: str) -> float | None:
+    """
+    Bitbo Charts public API — 5 req/min, 150k/mois.
+    Docs : https://bitbo.io/api/docs/category/endpoints
+    """
+    url = f"https://charts.bitbo.io/api/v1/{endpoint}/?latest=true"
+    hdrs = {**HEADERS}
+    if BITBO_KEY:
+        hdrs["Authorization"] = f"Bearer {BITBO_KEY}"
+    try:
+        r = requests.get(url, headers=hdrs, timeout=TIMEOUT)
+        if r.status_code == 429:
+            print(f"[Bitbo] rate-limit sur {endpoint}")
+            return None
+        data = r.json()
+        rows = data.get("data", [])
+        if rows:
+            return float(rows[-1][1])
+    except Exception as e:
+        print(f"[Bitbo] {endpoint}: {e}")
+    return None
+
 
 def _crypto() -> dict:
     out = {}
 
-    # ── Funding Rate (Binance perpetuals) ────────────────────────
+    # ── Fetch BTC price + historique (yfinance) ──────────────────
+    btc_hist  = None
+    btc_price = None
+    btc_close = None
+    try:
+        btc_hist  = yf.Ticker("BTC-USD").history(period="max")
+        btc_close = btc_hist["Close"]
+        btc_price = float(btc_close.iloc[-1])
+    except Exception as e:
+        print(f"[crypto] BTC yfinance: {e}")
+
+    # ── Appels Bitbo en parallèle (thread pool pour respecter 5 req/min) ─
+    import concurrent.futures
+    bitbo_endpoints = {
+        "nupl":   "nupl-ratio",
+        "mvrv":   "mvrv-zscore",
+        "puell":  "puell-multiple",
+        "sopr":   "sopr",
+        "cdd":    "cdd",
+        "nvt":    "nvt",
+        "mayer":  "mayermultiple",
+        "rsim":   "monthly-rsi",
+    }
+    bitbo_vals: dict[str, float | None] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+        futures = {ex.submit(_bitbo, ep): key for key, ep in bitbo_endpoints.items()}
+        for fut in concurrent.futures.as_completed(futures):
+            bitbo_vals[futures[fut]] = fut.result()
+
+    # ── NUPL — Net Unrealized Profit/Loss ────────────────────────
+    nupl = bitbo_vals.get("nupl")
+    if nupl is not None:
+        nupl_r  = round(nupl, 3)
+        # < 0 = capitulation (achat), 0-0.25 = espoir, 0.25-0.5 = optimisme
+        # 0.5-0.75 = croyance/excitation, > 0.75 = euphorie (vente)
+        n_sig   = "sell" if nupl > 0.65 else "buy" if nupl < 0.1 else "neutral"
+        n_label = ("Euphorie" if nupl > 0.75 else "Excitation" if nupl > 0.5
+                   else "Optimisme" if nupl > 0.25 else "Espoir" if nupl > 0.1
+                   else "Capitulation")
+        out["nupl"] = _ind(
+            _norm(nupl, -0.2, 1.0), f"{nupl_r} ({n_label})", "",
+            n_sig,
+            f"NUPL à {nupl_r} — zone {n_label}. "
+            + ("Euphorie : historiquement associée aux sommets de cycle, vente recommandée." if nupl > 0.65
+               else "Capitulation : panique généralisée, opportunité d'achat majeure." if nupl < 0.1
+               else "Zone intermédiaire, pas de signal extrême."),
+        )
+
+    # ── MVRV Z-Score ─────────────────────────────────────────────
+    mvrv = bitbo_vals.get("mvrv")
+    if mvrv is not None:
+        mvrv_r = round(mvrv, 2)
+        # > 7 = bulle, < 0 = opportunité d'achat historique
+        m_sig  = "sell" if mvrv > 5 else "buy" if mvrv < 0 else "neutral"
+        out["mvrv"] = _ind(
+            _norm(mvrv, -1, 8), mvrv_r, "",
+            m_sig,
+            f"MVRV Z-Score à {mvrv_r} (Bitbo) — "
+            + ("zone rouge (> 5), distribution probable, sommet de cycle proche." if mvrv > 5
+               else "zone verte (< 0), opportunité d'achat historique rare." if mvrv < 0
+               else "zone neutre, marché ni surchauffé ni survendu."),
+        )
+
+    # ── Puell Multiple ───────────────────────────────────────────
+    puell = bitbo_vals.get("puell")
+    if puell is not None:
+        puell_r = round(puell, 2)
+        p_sig   = "sell" if puell > 4 else "buy" if puell < 0.5 else "neutral"
+        out["puell"] = _ind(
+            _norm(puell, 0.2, 5), puell_r, "",
+            p_sig,
+            f"Puell Multiple à {puell_r} (Bitbo) — "
+            + ("zone de distribution (> 4), mineurs profitables, pression vendeuse." if puell > 4
+               else "zone d'accumulation (< 0.5), mineurs sous pression, opportunité." if puell < 0.5
+               else "zone neutre, mineurs en bonne santé financière."),
+        )
+
+    # ── SOPR — Spent Output Profit Ratio ────────────────────────
+    sopr = bitbo_vals.get("sopr")
+    if sopr is not None:
+        sopr_r = round(sopr, 3)
+        # > 1 = vendeurs en profit (distribution), < 1 = vendeurs en perte (capitulation)
+        s_sig  = "sell" if sopr > 1.14 else "buy" if sopr < 0.98 else "neutral"
+        out["sopr"] = _ind(
+            _norm(sopr, 0.95, 1.2), sopr_r, "",
+            s_sig,
+            f"SOPR à {sopr_r} (Bitbo) — "
+            + ("bien au-dessus de 1, vendeurs très profitables, pression distributive." if sopr > 1.14
+               else "sous 1, vendeurs en perte — capitulation, opportunité contrariante." if sopr < 0.98
+               else "proche de 1, équilibre sain entre vendeurs profitables et en perte."),
+        )
+
+    # ── Coin Days Destroyed ──────────────────────────────────────
+    cdd = bitbo_vals.get("cdd")
+    if cdd is not None:
+        # CDD élevé = anciens holders bougent leurs coins (signal de distribution)
+        cdd_m   = cdd / 1_000_000
+        c_sig   = "sell" if cdd > 21_000_000 else "buy" if cdd < 5_000_000 else "neutral"
+        out["cdd"] = _ind(
+            min(95, _norm(cdd, 1_000_000, 30_000_000)), f"{cdd_m:.1f}M", "",
+            c_sig,
+            f"Coin Days Destroyed à {cdd_m:.1f}M (Bitbo) — "
+            + ("très élevé : les anciens holders bougent leurs BTC, signal de distribution." if cdd > 21_000_000
+               else "faible : les anciens holders conservent, comportement bullish." if cdd < 5_000_000
+               else "niveau normal, pas de comportement extrême détecté."),
+        )
+
+    # ── NVT Signal ───────────────────────────────────────────────
+    nvt = bitbo_vals.get("nvt")
+    if nvt is not None:
+        nvt_r = round(nvt, 1)
+        n_sig  = "sell" if nvt > 150 else "buy" if nvt < 50 else "neutral"
+        out["nvt"] = _ind(
+            _norm(nvt, 20, 200), nvt_r, "",
+            n_sig,
+            f"NVT Signal à {nvt_r} (Bitbo) — "
+            + ("élevé (> 150) : réseau sous-utilisé par rapport à sa valorisation." if nvt > 150
+               else "bas (< 50) : réseau fortement utilisé, valeur fondamentale solide." if nvt < 50
+               else "dans la normale, valorisation cohérente avec l'activité réseau."),
+        )
+
+    # ── Mayer Multiple (Bitbo ou calcul yfinance) ────────────────
+    mayer = bitbo_vals.get("mayer")
+    if mayer is None and btc_close is not None and len(btc_close) >= 200:
+        # Calcul maison : Prix / MM200
+        ma200 = float(btc_close.rolling(200).mean().iloc[-1])
+        mayer = round(btc_price / ma200, 2) if ma200 > 0 else None
+    if mayer is not None:
+        mayer_r = round(mayer, 2)
+        # > 2.4 = zone de vente historique (Trace Mayer), < 1 = sous la MM200
+        m_sig   = "sell" if mayer > 2.4 else "buy" if mayer < 0.8 else "neutral"
+        out["mayer"] = _ind(
+            _norm(mayer, 0.4, 3.0), mayer_r, "x",
+            m_sig,
+            f"Mayer Multiple à {mayer_r}x (Prix BTC / MM200) — "
+            + ("zone de vente historique (> 2.4x) selon Trace Mayer." if mayer > 2.4
+               else "prix sous la MM200 (< 1x), zone d'accumulation historique." if mayer < 0.8
+               else "zone neutre, prix dans la normale par rapport à la MM200."),
+        )
+
+    # ── RSI Mensuel (Bitbo ou calcul yfinance monthly) ───────────
+    rsim = bitbo_vals.get("rsim")
+    if rsim is None and btc_close is not None:
+        # Calcul maison sur les clôtures mensuelles
+        monthly = btc_close.resample("ME").last()
+        rsim    = _rsi(monthly, 14)
+    if rsim is not None:
+        rsim_r = round(rsim)
+        rm_sig  = "sell" if rsim > 90 else "buy" if rsim < 40 else "neutral"
+        out["btcrsim"] = _ind(
+            rsim_r, rsim_r, "", rm_sig,
+            f"RSI Mensuel BTC à {rsim_r} — "
+            + ("zone de surachat extrême (> 90), historiquement associé aux sommets de cycle." if rsim > 90
+               else "zone de survente (< 40), opportunité d'accumulation long terme." if rsim < 40
+               else "zone neutre à modérément haussière."),
+        )
+
+    # ── Rainbow Chart (log-régression) ───────────────────────────
+    if btc_price:
+        rainbow = _rainbow_zone(btc_price)
+        if rainbow:
+            out["rainbow"] = rainbow
+
+    # ── Funding Rate (Binance) ────────────────────────────────────
     try:
         fr = _binance_funding_rate("BTCUSDT")
         if fr is not None:
-            fr_pct  = round(fr * 100, 4)
-            # Funding positif = longs paient les shorts (marché suracheté)
-            # Funding négatif = shorts paient les longs (marché survendu)
-            fr_sig  = "sell" if fr_pct > 0.05 else "buy" if fr_pct < -0.01 else "neutral"
-            fr_norm = _norm(fr_pct, -0.05, 0.1)
+            fr_pct = round(fr * 100, 4)
+            fr_sig = "sell" if fr_pct > 0.05 else "buy" if fr_pct < -0.01 else "neutral"
             out["funding"] = _ind(
-                fr_norm, f"{fr_pct:.4f} %", "/8h",
+                _norm(fr_pct, -0.05, 0.1), f"{fr_pct:.4f} %", "/8h",
                 fr_sig,
-                f"Funding Rate BTC/USDT perps à {fr_pct:.4f} %/8h (Binance) — "
-                + ("excès spéculatif long, risque de liquidations haussières." if fr_pct > 0.05
+                f"Funding Rate BTC perps à {fr_pct:.4f} %/8h (Binance) — "
+                + ("excès spéculatif long, risque de liquidations." if fr_pct > 0.05
                    else "marché short-biaié, pression vendeuse extrême." if fr_pct < -0.01
-                   else "funding neutre, pas d'excès directionnel détecté."),
+                   else "funding neutre, pas d'excès directionnel."),
             )
     except Exception as e:
-        print(f"[crypto] Funding Rate: {e}")
-
-    # ── Rainbow Chart (log-régression sur prix BTC yfinance) ─────
-    try:
-        btc_hist  = yf.Ticker("BTC-USD").history(period="5d")
-        btc_price = float(btc_hist["Close"].iloc[-1])
-        rainbow   = _rainbow_zone(btc_price)
-        if rainbow:
-            out["rainbow"] = rainbow
-    except Exception as e:
-        print(f"[crypto] Rainbow Chart: {e}")
+        print(f"[crypto] Funding: {e}")
 
     return out
 
