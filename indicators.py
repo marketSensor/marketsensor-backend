@@ -1,13 +1,19 @@
 """
-MarketSense — indicators.py
-Fetches and calculates all market indicators via :
-  - yfinance     : prices, RSI, MACD, Bollinger, ATR, MA crosses
-  - multpl.com   : Shiller CAPE (scrape)
-  - FRED API     : CPI, taux réels TIPS (clé optionnelle mais recommandée)
+MarketSense — indicators.py  v2
+Sources :
+  - yfinance         : RSI, MACD, Bollinger, ATR, MA, Stochastique, P/E, prix
+  - multpl.com       : Shiller CAPE (scrape)
+  - FRED API         : CPI YoY, taux réels TIPS 10y (clé gratuite recommandée)
+  - Binance API      : Funding Rate BTC (public, sans clé)
+  - CBOE             : Put/Call Ratio equity (CSV public)
+  - AAII             : Sentiment bullish/bearish (scrape hebdo)
+  - Log-régression   : Rainbow Chart BTC (calcul interne sur prix yfinance)
 """
 
-import os
+import io
 import math
+import datetime as dt
+import os
 import requests
 import yfinance as yf
 import pandas as pd
@@ -16,12 +22,18 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 FRED_KEY = os.getenv("FRED_API_KEY", "")
-HEADERS  = {"User-Agent": "Mozilla/5.0 (compatible; MarketSense/1.0)"}
-TIMEOUT  = 10
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    )
+}
+TIMEOUT = 12
 
 
 # ══════════════════════════════════════════════════════════════════
-# CALCULATION HELPERS
+# HELPERS — CALCULS TECHNIQUES
 # ══════════════════════════════════════════════════════════════════
 
 def _rsi(series: pd.Series, period: int = 14) -> float | None:
@@ -31,56 +43,118 @@ def _rsi(series: pd.Series, period: int = 14) -> float | None:
     gain  = delta.clip(lower=0).ewm(com=period - 1, min_periods=period).mean()
     loss  = (-delta.clip(upper=0)).ewm(com=period - 1, min_periods=period).mean()
     rs    = gain / loss.replace(0, np.nan)
-    rsi   = 100 - 100 / (1 + rs)
-    return round(float(rsi.iloc[-1]))
+    return round(float((100 - 100 / (1 + rs)).iloc[-1]))
 
 
 def _macd(series: pd.Series, fast=12, slow=26, signal=9):
-    ema_fast   = series.ewm(span=fast,   adjust=False).mean()
-    ema_slow   = series.ewm(span=slow,   adjust=False).mean()
-    macd_line  = ema_fast - ema_slow
+    ema_fast    = series.ewm(span=fast,   adjust=False).mean()
+    ema_slow    = series.ewm(span=slow,   adjust=False).mean()
+    macd_line   = ema_fast - ema_slow
     signal_line = macd_line.ewm(span=signal, adjust=False).mean()
     return float(macd_line.iloc[-1]), float(signal_line.iloc[-1])
+
+
+def _stochastic(hist: pd.DataFrame, k=14, d=3) -> tuple[float, float] | None:
+    """Stochastique %K et %D."""
+    if len(hist) < k + d:
+        return None
+    low_min  = hist["Low"].rolling(k).min()
+    high_max = hist["High"].rolling(k).max()
+    pct_k    = 100 * (hist["Close"] - low_min) / (high_max - low_min)
+    pct_d    = pct_k.rolling(d).mean()
+    return round(float(pct_k.iloc[-1])), round(float(pct_d.iloc[-1]))
 
 
 def _bollinger_pct(series: pd.Series, window=20) -> float | None:
     if len(series) < window:
         return None
-    ma  = series.rolling(window).mean()
-    std = series.rolling(window).std()
-    upper = ma + 2 * std
-    lower = ma - 2 * std
-    pct = (series.iloc[-1] - lower.iloc[-1]) / (upper.iloc[-1] - lower.iloc[-1]) * 100
-    return round(max(0, min(100, pct)))
+    ma    = series.rolling(window).mean()
+    std   = series.rolling(window).std()
+    upper = (ma + 2 * std).iloc[-1]
+    lower = (ma - 2 * std).iloc[-1]
+    pct   = (series.iloc[-1] - lower) / (upper - lower) * 100
+    return round(max(0.0, min(100.0, pct)))
 
 
 def _atr_pct(hist: pd.DataFrame, period=14) -> float | None:
     if len(hist) < period + 1:
         return None
     high, low, close = hist["High"], hist["Low"], hist["Close"]
-    tr = pd.concat([
-        high - low,
-        (high - close.shift()).abs(),
-        (low  - close.shift()).abs(),
-    ], axis=1).max(axis=1)
+    tr  = pd.concat([high - low,
+                     (high - close.shift()).abs(),
+                     (low  - close.shift()).abs()], axis=1).max(axis=1)
     atr = tr.rolling(period).mean().iloc[-1]
     return round(atr / close.iloc[-1] * 100, 2)
 
 
-def _norm(v: float, lo: float, hi: float) -> int:
-    return int(max(0, min(100, (v - lo) / (hi - lo) * 100)))
+def _rainbow_zone(btc_price: float) -> dict | None:
+    """
+    Rainbow Chart BTC — log-régression sur les jours depuis le genesis block.
+    Formule de référence : log10(price) ≈ 5.84 × log10(days) − 17.01
+    Zones 1 (fire sale) → 9 (maximum bubble).
+    """
+    try:
+        genesis = dt.date(2009, 1, 3)
+        days    = (dt.date.today() - genesis).days
+        if days <= 0:
+            return None
 
+        # Ligne centrale de la régression
+        log_mid   = 5.84 * math.log10(days) - 17.01
+        price_mid = 10 ** log_mid
 
-def _rsi_sig(v: float, buy=35, sell=65) -> str:
-    return "buy" if v < buy else "sell" if v > sell else "neutral"
+        # Écart log du prix actuel par rapport à la ligne centrale
+        log_ratio = math.log10(btc_price / price_mid) if price_mid > 0 else 0
 
+        # Mapping vers les 9 zones (chaque zone ≈ 0.27 d'écart log)
+        BAND = 0.27
+        if   log_ratio >  4 * BAND: zone = 9   # Maximum Bubble Territory
+        elif log_ratio >  3 * BAND: zone = 8   # Sell. Seriously, SELL!
+        elif log_ratio >  2 * BAND: zone = 7   # FOMO intensifies
+        elif log_ratio >  1 * BAND: zone = 6   # Is this a bubble?
+        elif log_ratio >  0:        zone = 5   # HOLD!
+        elif log_ratio > -1 * BAND: zone = 4   # Still cheap
+        elif log_ratio > -2 * BAND: zone = 3   # Accumulate
+        elif log_ratio > -3 * BAND: zone = 2   # BUY!
+        else:                       zone = 1   # Basically a fire sale
 
-def _ind(val, raw, unit, sig, desc) -> dict:
-    return {"val": val, "raw": str(raw), "unit": unit, "sig": sig, "desc": desc}
+        LABELS = {
+            9: ("Maximum Bubble", "sell"),
+            8: ("Vendre maintenant", "sell"),
+            7: ("FOMO — prudence", "sell"),
+            6: ("Possible bulle ?", "neutral"),
+            5: ("Conserver (HOLD)", "neutral"),
+            4: ("Encore bon marché", "buy"),
+            3: ("Accumuler", "buy"),
+            2: ("Acheter !", "buy"),
+            1: ("Soldes exceptionnelles", "buy"),
+        }
+        label, sig = LABELS[zone]
+
+        # Position sur la barre 0-100 : zone 1 → 5%, zone 9 → 95%
+        val = round(5 + (zone - 1) * 90 / 8)
+
+        return {
+            "val":  val,
+            "raw":  f"Zone {zone}/9",
+            "unit": f" — {label}",
+            "sig":  sig,
+            "desc": (
+                f"Rainbow Chart BTC — Zone {zone}/9 ({label}). "
+                f"Prix actuel : ${btc_price:,.0f} vs régression centrale : ${price_mid:,.0f}. "
+                + ("Historiquement associé aux sommets de cycle, prudence maximale." if zone >= 7
+                   else "Zone de distribution, envisager de prendre des bénéfices." if zone == 6
+                   else "Zone neutre selon le modèle logarithmique." if zone == 5
+                   else "Zone d'accumulation favorable selon le modèle de cycle BTC.")
+            ),
+        }
+    except Exception as e:
+        print(f"[Rainbow] {e}")
+        return None
 
 
 # ══════════════════════════════════════════════════════════════════
-# FRED API
+# HELPERS — REQUÊTES EXTERNES
 # ══════════════════════════════════════════════════════════════════
 
 def _fred(series_id: str, limit: int = 1) -> list[float] | None:
@@ -92,7 +166,7 @@ def _fred(series_id: str, limit: int = 1) -> list[float] | None:
         f"&file_type=json&sort_order=desc&limit={limit}"
     )
     try:
-        r = requests.get(url, timeout=TIMEOUT, headers=HEADERS)
+        r   = requests.get(url, timeout=TIMEOUT, headers=HEADERS)
         obs = r.json().get("observations", [])
         return [float(o["value"]) for o in obs if o["value"] != "."]
     except Exception as e:
@@ -100,13 +174,10 @@ def _fred(series_id: str, limit: int = 1) -> list[float] | None:
         return None
 
 
-# ══════════════════════════════════════════════════════════════════
-# SCRAPING
-# ══════════════════════════════════════════════════════════════════
-
 def _scrape_cape() -> float | None:
     try:
-        r    = requests.get("https://www.multpl.com/shiller-pe", headers=HEADERS, timeout=TIMEOUT)
+        r    = requests.get("https://www.multpl.com/shiller-pe",
+                            headers=HEADERS, timeout=TIMEOUT)
         soup = BeautifulSoup(r.text, "html.parser")
         el   = soup.select_one("#current-value")
         if el:
@@ -116,14 +187,107 @@ def _scrape_cape() -> float | None:
     return None
 
 
+def _cboe_put_call() -> float | None:
+    """
+    Ratio Put/Call equity quotidien publié par le CBOE.
+    URL publique sans authentification.
+    """
+    url = "https://cdn.cboe.com/api/global/us_indices/daily_prices/EQUITY_PC_RATIO_History.csv"
+    try:
+        r    = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        df   = pd.read_csv(io.StringIO(r.text))
+        # Dernière colonne = ratio, dernière ligne = plus récente
+        ratio = float(df.iloc[-1, -1])
+        return round(ratio, 2)
+    except Exception as e:
+        print(f"[CBOE] Put/Call: {e}")
+    # Fallback : essayer l'ancien chemin
+    try:
+        url2 = "https://www.cboe.com/publish/scheduledtask/mktdata/datahouse/equitypc.csv"
+        r    = requests.get(url2, headers=HEADERS, timeout=TIMEOUT)
+        # Le fichier a un en-tête sur 2 lignes
+        df   = pd.read_csv(io.StringIO(r.text), skiprows=2, header=None)
+        ratio = float(df.iloc[-1, -1])
+        return round(ratio, 2)
+    except Exception as e2:
+        print(f"[CBOE] Put/Call fallback: {e2}")
+    return None
+
+
+def _aaii_sentiment() -> dict | None:
+    """
+    Sentiment hebdomadaire AAII (American Association of Individual Investors).
+    Scrape la page publique.
+    """
+    try:
+        r    = requests.get("https://www.aaii.com/sentimentsurvey",
+                            headers=HEADERS, timeout=TIMEOUT)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        # Les pourcentages sont dans des éléments avec classes spécifiques
+        # Structure typique : Bullish / Neutral / Bearish en %
+        texts = soup.get_text()
+
+        # Chercher les patterns "XX.X% Bullish" etc.
+        import re
+        bullish  = re.search(r"([\d.]+)%\s*Bullish",  texts, re.I)
+        bearish  = re.search(r"([\d.]+)%\s*Bearish",  texts, re.I)
+        neutral_ = re.search(r"([\d.]+)%\s*Neutral",  texts, re.I)
+
+        if bullish and bearish:
+            b  = float(bullish.group(1))
+            br = float(bearish.group(1))
+            n  = float(neutral_.group(1)) if neutral_ else round(100 - b - br, 1)
+            return {"bullish": b, "bearish": br, "neutral": n}
+    except Exception as e:
+        print(f"[AAII] scrape: {e}")
+    return None
+
+
+def _binance_funding_rate(symbol: str = "BTCUSDT") -> float | None:
+    """
+    Funding Rate des contrats perpétuels Binance.
+    API publique, sans clé requise.
+    """
+    url = f"https://fapi.binance.com/fapi/v1/fundingRate?symbol={symbol}&limit=1"
+    try:
+        r    = requests.get(url, timeout=TIMEOUT, headers=HEADERS)
+        data = r.json()
+        if data and isinstance(data, list):
+            return float(data[0]["fundingRate"])
+        # Parfois c'est un dict direct
+        if isinstance(data, dict) and "fundingRate" in data:
+            return float(data["fundingRate"])
+    except Exception as e:
+        print(f"[Binance] funding rate: {e}")
+    return None
+
+
 # ══════════════════════════════════════════════════════════════════
-# BOURSE INDICATORS
+# HELPERS — NORMALISATION
+# ══════════════════════════════════════════════════════════════════
+
+def _norm(v: float, lo: float, hi: float) -> int:
+    return int(max(0, min(100, (v - lo) / (hi - lo) * 100)))
+
+def _rsi_sig(v: float, buy=35, sell=65) -> str:
+    return "buy" if v < buy else "sell" if v > sell else "neutral"
+
+def _ind(val, raw, unit, sig, desc) -> dict:
+    return {"val": int(val), "raw": str(raw), "unit": unit, "sig": sig, "desc": desc}
+
+
+# ══════════════════════════════════════════════════════════════════
+# BOURSE
 # ══════════════════════════════════════════════════════════════════
 
 def _bourse() -> dict:
     out = {}
 
-    # ── S&P 500 ─────────────────────────────────────────────────
+    # ── S&P 500 — données de base ────────────────────────────────
+    hist  = None
+    close = None
+    price = None
     try:
         hist  = yf.Ticker("^GSPC").history(period="2y")
         close = hist["Close"]
@@ -152,24 +316,38 @@ def _bourse() -> dict:
             f"tendance {'haussière' if bull else 'baissière'} confirmée.",
         )
 
+        # Stochastique %K/%D
+        stoch = _stochastic(hist)
+        if stoch:
+            k_val, d_val = stoch
+            s_sig = "sell" if k_val > 80 else "buy" if k_val < 20 else "neutral"
+            out["stoch"] = _ind(
+                k_val, f"%K {k_val} / %D {d_val}", "",
+                s_sig,
+                f"Stochastique S&P 500 : %K={k_val}, %D={d_val} — "
+                + ("suracheté (> 80), signal de retournement possible." if k_val > 80
+                   else "survendu (< 20), rebond potentiel." if k_val < 20
+                   else "zone neutre, pas de signal extrême."),
+            )
+
         # MM50 vs Prix
         above50 = price > ma50
         out["mm50"] = _ind(
             78 if above50 else 25,
-            "Au-dessus" if above50 else "En dessous", "",
+            f"{'Au-dessus' if above50 else 'En dessous'} ({int(ma50):,})", "",
             "buy" if above50 else "sell",
-            f"S&P 500 {'au-dessus' if above50 else 'en dessous'} de sa MM50 "
-            f"({int(ma50):,}) — tendance court terme {'haussière.' if above50 else 'baissière.'}",
+            f"S&P 500 à {int(price):,} {'au-dessus' if above50 else 'en dessous'} "
+            f"de sa MM50 ({int(ma50):,}) — tendance court terme {'haussière.' if above50 else 'baissière.'}",
         )
 
         # MM200 vs Prix
         above200 = price > ma200
         out["mm200"] = _ind(
             83 if above200 else 20,
-            "Au-dessus" if above200 else "En dessous", "",
+            f"{'Au-dessus' if above200 else 'En dessous'} ({int(ma200):,})", "",
             "buy" if above200 else "sell",
-            f"S&P 500 {'au-dessus' if above200 else 'en dessous'} de sa MM200 "
-            f"({int(ma200):,}) — tendance long terme {'haussière.' if above200 else 'baissière.'}",
+            f"S&P 500 à {int(price):,} {'au-dessus' if above200 else 'en dessous'} "
+            f"de sa MM200 ({int(ma200):,}) — tendance long terme {'haussière.' if above200 else 'baissière.'}",
         )
 
         # Golden / Death Cross
@@ -190,8 +368,8 @@ def _bourse() -> dict:
                 b_sig,
                 f"Position dans les bandes de Bollinger : {boll} % — "
                 + ("proche de la bande haute, risque de retournement." if boll > 80
-                   else "proche de la bande basse, rebond possible." if boll < 20
-                   else "zone médiane, compression de volatilité en cours."),
+                   else "proche de la bande basse, rebond probable." if boll < 20
+                   else "zone médiane, compression de volatilité."),
             )
 
         # ATR
@@ -199,7 +377,7 @@ def _bourse() -> dict:
         if atr is not None:
             a_sig = "sell" if atr > 2.5 else "buy" if atr < 0.8 else "neutral"
             out["atr"] = _ind(
-                _norm(atr, 0.5, 3.0), f"{atr} %", " du prix",
+                _norm(atr, 0.5, 3.0), f"{atr} % du prix", "",
                 a_sig,
                 f"ATR à {atr} % du prix — "
                 + ("volatilité élevée, marché nerveux." if atr > 2.5
@@ -210,23 +388,22 @@ def _bourse() -> dict:
     except Exception as e:
         print(f"[bourse] S&P 500: {e}")
 
-    # ── VIX ─────────────────────────────────────────────────────
+    # ── VIX ──────────────────────────────────────────────────────
     try:
-        vix_hist  = yf.Ticker("^VIX").history(period="5d")
-        vix_price = round(float(vix_hist["Close"].iloc[-1]), 1)
+        vix_price = round(float(yf.Ticker("^VIX").history(period="5d")["Close"].iloc[-1]), 1)
         v_sig = "sell" if vix_price > 30 else "buy" if vix_price < 15 else "neutral"
         out["vix"] = _ind(
             _norm(vix_price, 10, 50), vix_price, "",
             v_sig,
             f"VIX à {vix_price} — "
-            + ("marché très anxieux, opportunité contrariante possible." if vix_price > 30
+            + ("marché très anxieux, opportunité contrariante." if vix_price > 30
                else "complacence élevée, méfiance vis-à-vis des chocs." if vix_price < 15
                else "volatilité modérée, marché relativement serein."),
         )
     except Exception as e:
         print(f"[bourse] VIX: {e}")
 
-    # ── Shiller CAPE ────────────────────────────────────────────
+    # ── Shiller CAPE ─────────────────────────────────────────────
     try:
         cape = _scrape_cape()
         if cape:
@@ -235,12 +412,73 @@ def _bourse() -> dict:
                 _norm(cape, 10, 45), round(cape, 1), "x",
                 c_sig,
                 f"Shiller CAPE à {round(cape,1)}x (multpl.com) — "
-                + ("marchés fortement surévalués historiquement (moy. ~16x). Prudence long terme." if cape > 30
-                   else "valorisation attrayante, bon potentiel de rendement futur." if cape < 15
+                + ("marchés fortement surévalués (moy. historique ~16x). Prudence long terme." if cape > 30
+                   else "valorisation attrayante." if cape < 15
                    else "valorisation dans la moyenne historique."),
             )
     except Exception as e:
         print(f"[bourse] CAPE: {e}")
+
+    # ── P/E Trailing (SPY comme proxy S&P 500) ───────────────────
+    try:
+        spy_info = yf.Ticker("SPY").fast_info
+        # fast_info peut avoir trailing_pe selon les versions de yfinance
+        pe = getattr(spy_info, "trailing_pe", None)
+        if pe is None:
+            # Fallback : calculer approximativement depuis le prix et EPS estimé
+            spy_price = getattr(spy_info, "last_price", None)
+            # On ne peut pas calculer sans EPS → on passe
+            raise ValueError("trailing_pe indisponible")
+        pe = round(float(pe), 1)
+        p_sig = "sell" if pe > 25 else "buy" if pe < 14 else "neutral"
+        out["pe_fwd"] = _ind(
+            _norm(pe, 10, 35), pe, "x",
+            p_sig,
+            f"P/E Trailing S&P 500 (SPY) à {pe}x — "
+            + ("valorisation élevée par rapport à la moyenne historique (17-18x)." if pe > 25
+               else "valorisation attrayante, potentiel de hausse long terme." if pe < 14
+               else "valorisation dans la normale historique."),
+        )
+    except Exception as e:
+        print(f"[bourse] P/E: {e}")
+
+    # ── Put/Call Ratio (CBOE) ────────────────────────────────────
+    try:
+        pc = _cboe_put_call()
+        if pc is not None:
+            # Ratio bas (< 0.7) = excès d'optimisme (mauvais signal)
+            # Ratio haut (> 1.0) = excès de peur (bon signal contrariant)
+            pc_sig = "buy" if pc > 1.0 else "sell" if pc < 0.7 else "neutral"
+            pc_norm = _norm(pc, 0.4, 1.4)
+            out["putcall"] = _ind(
+                pc_norm, pc, "",
+                pc_sig,
+                f"Ratio Put/Call equity (CBOE) à {pc} — "
+                + ("excès de peur, opportunité contrariante d'achat." if pc > 1.0
+                   else "excès d'optimisme, méfiance recommandée." if pc < 0.7
+                   else "équilibre put/call, sentiment neutre."),
+            )
+    except Exception as e:
+        print(f"[bourse] Put/Call: {e}")
+
+    # ── AAII Sentiment ───────────────────────────────────────────
+    try:
+        aaii = _aaii_sentiment()
+        if aaii:
+            b = aaii["bullish"]
+            br = aaii["bearish"]
+            # > 50% bulls = euphorie, < 25% = pessimisme extrême (opportunité)
+            a_sig = "sell" if b > 50 else "buy" if b < 25 else "neutral"
+            out["aaii"] = _ind(
+                round(b), f"{b:.0f} % bulls / {br:.0f} % bears", "",
+                a_sig,
+                f"AAII Sentiment : {b:.0f} % haussiers, {br:.0f} % baissiers — "
+                + ("euphorie excessive (> 50% bulls), signal de prudence." if b > 50
+                   else "pessimisme extrême (< 25% bulls), opportunité contrariante." if b < 25
+                   else "sentiment équilibré, dans la normale historique."),
+            )
+    except Exception as e:
+        print(f"[bourse] AAII: {e}")
 
     # ── Taux réels TIPS 10y (FRED) ───────────────────────────────
     try:
@@ -254,12 +492,12 @@ def _bourse() -> dict:
                 f"Taux réels TIPS 10y à {t:.1f} % (FRED) — "
                 + ("très favorable à l'or et aux actifs réels." if t < 0.5
                    else "taux élevés, pression sur l'or et les matières premières." if t > 2
-                   else "taux modérés, impact neutre sur les matières premières."),
+                   else "taux modérés, impact neutre."),
             )
     except Exception as e:
         print(f"[bourse] TIPS: {e}")
 
-    # ── CPI YoY (FRED) ────────────────────────────────────────────
+    # ── CPI YoY (FRED) ───────────────────────────────────────────
     try:
         cpi_obs = _fred("CPIAUCSL", limit=13)
         if cpi_obs and len(cpi_obs) >= 13:
@@ -270,7 +508,7 @@ def _bourse() -> dict:
                 c_sig,
                 f"Inflation CPI à {yoy} % annualisé (FRED) — "
                 + ("soutient les actifs tangibles et matières premières." if yoy > 2
-                   else "inflation basse, moins de pression favorable sur les matières premières." if yoy < 1
+                   else "inflation très basse, impact réduit sur les matières premières." if yoy < 1
                    else "inflation modérée."),
             )
     except Exception as e:
@@ -280,20 +518,60 @@ def _bourse() -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════
-# MATIÈRES PREMIÈRES INDICATORS
+# CRYPTO — indicateurs backend (complète le frontend CoinGecko/Alternative.me)
+# ══════════════════════════════════════════════════════════════════
+
+def _crypto() -> dict:
+    out = {}
+
+    # ── Funding Rate (Binance perpetuals) ────────────────────────
+    try:
+        fr = _binance_funding_rate("BTCUSDT")
+        if fr is not None:
+            fr_pct  = round(fr * 100, 4)
+            # Funding positif = longs paient les shorts (marché suracheté)
+            # Funding négatif = shorts paient les longs (marché survendu)
+            fr_sig  = "sell" if fr_pct > 0.05 else "buy" if fr_pct < -0.01 else "neutral"
+            fr_norm = _norm(fr_pct, -0.05, 0.1)
+            out["funding"] = _ind(
+                fr_norm, f"{fr_pct:.4f} %", "/8h",
+                fr_sig,
+                f"Funding Rate BTC/USDT perps à {fr_pct:.4f} %/8h (Binance) — "
+                + ("excès spéculatif long, risque de liquidations haussières." if fr_pct > 0.05
+                   else "marché short-biaié, pression vendeuse extrême." if fr_pct < -0.01
+                   else "funding neutre, pas d'excès directionnel détecté."),
+            )
+    except Exception as e:
+        print(f"[crypto] Funding Rate: {e}")
+
+    # ── Rainbow Chart (log-régression sur prix BTC yfinance) ─────
+    try:
+        btc_hist  = yf.Ticker("BTC-USD").history(period="5d")
+        btc_price = float(btc_hist["Close"].iloc[-1])
+        rainbow   = _rainbow_zone(btc_price)
+        if rainbow:
+            out["rainbow"] = rainbow
+    except Exception as e:
+        print(f"[crypto] Rainbow Chart: {e}")
+
+    return out
+
+
+# ══════════════════════════════════════════════════════════════════
+# MATIÈRES PREMIÈRES
 # ══════════════════════════════════════════════════════════════════
 
 def _matieres() -> dict:
     out = {}
 
     symbols = {
-        "gold":     "GC=F",
-        "silver":   "SI=F",
-        "platinum": "PL=F",
-        "palladium":"PA=F",
-        "copper":   "HG=F",
-        "dxy":      "DX-Y.NYB",
-        "uranium":  "URA",   # ETF proxy
+        "gold":      "GC=F",
+        "silver":    "SI=F",
+        "platinum":  "PL=F",
+        "palladium": "PA=F",
+        "copper":    "HG=F",
+        "dxy":       "DX-Y.NYB",
+        "uranium":   "URA",
     }
 
     data: dict[str, pd.Series] = {}
@@ -305,36 +583,34 @@ def _matieres() -> dict:
         except Exception as e:
             print(f"[matieres] {sym}: {e}")
 
-    # ── DXY ─────────────────────────────────────────────────────
+    # DXY
     if "dxy" in data:
-        s    = data["dxy"]
-        p    = round(float(s.iloc[-1]), 1)
-        ma200 = float(s.rolling(200).mean().iloc[-1])
-        rsi_v = _rsi(s)
+        s      = data["dxy"]
+        p      = round(float(s.iloc[-1]), 1)
+        ma200  = float(s.rolling(200).mean().iloc[-1])
         strong = p > ma200
-        d_sig  = "sell" if strong else "buy"  # fort dollar = mauvais pour MP
         out["dxy"] = _ind(
             _norm(p, 90, 115), p, "",
-            d_sig,
+            "sell" if strong else "buy",
             f"DXY à {p} ({'au-dessus' if strong else 'en dessous'} de sa MM200 {ma200:.0f}) — "
             f"dollar {'fort, pression sur les matières premières.' if strong else 'en repli, favorable aux matières premières.'}",
         )
 
-    # ── RSI Or ────────────────────────────────────────────────
+    # RSI Or
     if "gold" in data:
-        s   = data["gold"]
-        rv  = _rsi(s)
-        p   = round(float(s.iloc[-1]))
+        s  = data["gold"]
+        rv = _rsi(s)
+        p  = round(float(s.iloc[-1]))
         if rv is not None:
             out["goldrsi"] = _ind(
                 rv, rv, "", _rsi_sig(rv),
                 f"RSI Or (GC=F) à {rv}, prix ${p:,} — "
-                + ("or suracheté à court terme, prudence." if rv > 65
-                   else "or survendu, excellente opportunité d'accumulation." if rv < 35
+                + ("or suracheté à court terme." if rv > 65
+                   else "or survendu, opportunité d'accumulation." if rv < 35
                    else "zone neutre sur l'or."),
             )
 
-    # ── Ratio Or / Argent ──────────────────────────────────────
+    # Ratio Or / Argent
     if "gold" in data and "silver" in data:
         gp    = float(data["gold"].iloc[-1])
         sp    = float(data["silver"].iloc[-1])
@@ -344,12 +620,12 @@ def _matieres() -> dict:
             _norm(ratio, 40, 100), f"{ratio}:1", "",
             r_sig,
             f"Ratio Or/Argent à {ratio}:1 (Or ${gp:,.0f} / Argent ${sp:.1f}) — "
-            + ("l'argent est historiquement sous-évalué vs l'or (moy. ~65:1). Signal d'achat fort sur l'argent." if ratio > 75
+            + ("l'argent est historiquement sous-évalué vs l'or (moy. ~65:1)." if ratio > 75
                else "argent surperformant l'or, ratio bas." if ratio < 55
                else "ratio dans la normale historique."),
         )
 
-    # ── RSI Argent ─────────────────────────────────────────────
+    # RSI Argent
     if "silver" in data:
         s  = data["silver"]
         rv = _rsi(s)
@@ -357,76 +633,63 @@ def _matieres() -> dict:
             out["sivrsi"] = _ind(
                 rv, rv, "", _rsi_sig(rv),
                 f"RSI Argent (SI=F) à {rv} — "
-                + ("argent suracheté." if rv > 65
-                   else "argent survendu, opportunité d'accumulation." if rv < 35
-                   else "zone neutre sur l'argent."),
+                + ("suracheté." if rv > 65 else "survendu, opportunité." if rv < 35 else "zone neutre."),
             )
 
-    # ── Platine vs Palladium ────────────────────────────────────
+    # Platine vs Palladium
     if "platinum" in data and "palladium" in data:
-        pt  = round(float(data["platinum"].iloc[-1]))
-        pd_ = round(float(data["palladium"].iloc[-1]))
-        ratio = round(pt / pd_, 2)
-        pp_sig = "buy" if ratio < 1.0 else "neutral" if ratio < 1.3 else "sell"
+        pt   = round(float(data["platinum"].iloc[-1]))
+        pd_  = round(float(data["palladium"].iloc[-1]))
+        r    = round(pt / pd_, 2)
+        pp_s = "buy" if r < 1.0 else "neutral" if r < 1.3 else "sell"
         out["platpall"] = _ind(
-            _norm(ratio, 0.3, 2.0),
-            f"Pt ${pt:,} / Pd ${pd_:,}", "",
-            pp_sig,
-            f"Platine à ${pt:,} vs Palladium à ${pd_:,} (ratio {ratio}) — "
-            + ("platine à forte décote, potentiel de rattrapage historique important." if ratio < 1.0
-               else "ratio normalisé, spread réduit." if ratio < 1.3
+            _norm(r, 0.3, 2.0), f"Pt ${pt:,} / Pd ${pd_:,}", "",
+            pp_s,
+            f"Platine ${pt:,} vs Palladium ${pd_:,} (ratio {r}) — "
+            + ("platine à forte décote, potentiel de rattrapage." if r < 1.0
+               else "ratio normalisé." if r < 1.3
                else "platine à prime sur le palladium."),
         )
 
-    # ── Cuivre ─────────────────────────────────────────────────
+    # Cuivre
     if "copper" in data:
         s  = data["copper"]
         rv = _rsi(s)
         p  = round(float(s.iloc[-1]), 2)
         if rv is not None:
-            c_sig = _rsi_sig(rv)
             out["copper"] = _ind(
-                rv, f"${p}/lb", "",
-                c_sig,
+                rv, f"${p}/lb", "", _rsi_sig(rv),
                 f"Cuivre (HG=F) à ${p}/lb, RSI {rv} — "
-                + ("demande structurelle forte (IA, transition énergétique, EVs). " if rv < 65 else "")
-                + ("surachat à court terme." if rv > 65
-                   else "survente, opportunité sur fond de demande structurelle croissante." if rv < 35
-                   else "demande à long terme soutenue par la transition énergétique."),
+                + ("suracheté." if rv > 65
+                   else "survendu sur fond de demande structurelle forte." if rv < 35
+                   else "demande soutenue par la transition énergétique (IA, EVs)."),
             )
 
-    # ── Uranium ETF (URA) comme proxy ──────────────────────────
+    # Uranium ETF (URA)
     if "uranium" in data:
         s  = data["uranium"]
         rv = _rsi(s)
         p  = round(float(s.iloc[-1]), 2)
         if rv is not None:
-            u_sig = _rsi_sig(rv)
-            out["ursi"] = _ind(
-                rv, rv, "", u_sig,
-                f"RSI URA ETF (proxy uranium) à {rv}, prix ${p} — "
-                + ("suracheté à court terme." if rv > 65
-                   else "survendu, opportunité sur fond de déficit structurel." if rv < 35
-                   else "zone neutre, tendance haussière long terme intacte."),
-            )
+            out["ursi"]  = _ind(rv, rv, "", _rsi_sig(rv),
+                f"RSI URA ETF à {rv} — {'suracheté.' if rv>65 else 'survendu.' if rv<35 else 'zone neutre, tendance long terme haussière.'}")
             out["uspot"] = _ind(
-                _norm(p, 15, 60), f"${p}", " (URA ETF)",
+                _norm(p, 15, 65), f"${p}", " (URA ETF)",
                 "buy" if p > 25 else "neutral",
-                f"URA ETF à ${p} (proxy du marché uranium) — "
-                + ("déficit structurel offre/demande persistant jusqu'à 2030+." if p > 25
-                   else "marché en consolidation."),
+                f"URA ETF (proxy uranium) à ${p} — déficit structurel offre/demande jusqu'à 2030+.",
             )
 
     return out
 
 
 # ══════════════════════════════════════════════════════════════════
-# MAIN ENTRY POINT
+# POINT D'ENTRÉE
 # ══════════════════════════════════════════════════════════════════
 
 def get_all() -> dict:
     return {
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "bourse":   _bourse(),
-        "matieres": _matieres(),
+        "bourse":    _bourse(),
+        "crypto":    _crypto(),
+        "matieres":  _matieres(),
     }
