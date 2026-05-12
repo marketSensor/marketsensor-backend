@@ -281,7 +281,84 @@ def _ind(val, raw, unit, sig, desc) -> dict:
 # BOURSE
 # ══════════════════════════════════════════════════════════════════
 
-def _bourse() -> dict:
+def _etf_block(ticker: str, prefix: str, label: str) -> dict:
+    """
+    Génère RSI, MACD, MM50, MM200, Stochastique et variation 1 an pour un ETF.
+    prefix  : identifiant court (ex. 'urth', 'eem', 'aaxj')
+    label   : nom affiché (ex. 'MSCI World (URTH)')
+    """
+    out = {}
+    try:
+        hist  = yf.Ticker(ticker).history(period="2y")
+        if hist.empty:
+            print(f"[etf] {ticker} : données vides")
+            return out
+
+        close = hist["Close"]
+        price = float(close.iloc[-1])
+        ma50  = float(close.rolling(50).mean().iloc[-1])
+        ma200 = float(close.rolling(200).mean().iloc[-1])
+
+        above50  = price > ma50
+        above200 = price > ma200
+        pct200   = round((price / ma200 - 1) * 100, 1)
+
+        # RSI 14j
+        rsi_v = _rsi(close)
+        if rsi_v is not None:
+            out[f"rsi_{prefix}"] = _ind(
+                rsi_v, rsi_v, "", _rsi_sig(rsi_v),
+                f"RSI {label} à {rsi_v} — "
+                + ("suracheté, risque de correction à court terme." if rsi_v > 70
+                   else "survendu — opportunité d'achat potentielle." if rsi_v < 30
+                   else "zone neutre, momentum équilibré."),
+            )
+
+        # MACD
+        macd_v, signal_v = _macd(close)
+        bull = macd_v > signal_v
+        out[f"macd_{prefix}"] = _ind(
+            72 if bull else 28, "Positif" if bull else "Négatif", "",
+            "buy" if bull else "sell",
+            f"MACD {label} {'au-dessus' if bull else 'sous'} sa ligne de signal — "
+            f"tendance {'haussière' if bull else 'baissière'} confirmée.",
+        )
+
+        # Prix vs MM50
+        out[f"mm50_{prefix}"] = _ind(
+            78 if above50 else 25,
+            f"{'Au-dessus' if above50 else 'En dessous'} ({int(ma50)})", "",
+            "buy" if above50 else "sell",
+            f"{label} {'au-dessus' if above50 else 'en dessous'} de sa MM50 ({int(ma50)}) — "
+            f"tendance court terme {'haussière.' if above50 else 'baissière.'}",
+        )
+
+        # Prix vs MM200
+        out[f"mm200_{prefix}"] = _ind(
+            83 if above200 else 20,
+            f"{'+ ' if pct200 >= 0 else ''}{pct200} %", "",
+            "buy" if above200 else "sell",
+            f"{label} {'au-dessus' if above200 else 'en dessous'} de sa MM200 ({int(ma200)}) "
+            f"de {abs(pct200)} % — tendance long terme {'haussière.' if above200 else 'baissière.'}",
+        )
+
+        # Stochastique
+        stoch = _stochastic(hist)
+        if stoch:
+            k_val, d_val = stoch
+            s_sig = "sell" if k_val > 80 else "buy" if k_val < 20 else "neutral"
+            out[f"stoch_{prefix}"] = _ind(
+                k_val, f"%K {k_val} / %D {d_val}", "",
+                s_sig,
+                f"Stochastique {label} : %K={k_val}, %D={d_val} — "
+                + ("suracheté (> 80)." if k_val > 80
+                   else "survendu (< 20), rebond potentiel." if k_val < 20
+                   else "zone neutre."),
+            )
+
+    except Exception as e:
+        print(f"[etf] {ticker}: {e}")
+    return out
     out = {}
 
     # ── S&P 500 — données de base ────────────────────────────────
@@ -511,8 +588,14 @@ def _bourse() -> dict:
                    else "inflation très basse, impact réduit sur les matières premières." if yoy < 1
                    else "inflation modérée."),
             )
-    except Exception as e:
-        print(f"[bourse] CPI: {e}")
+    # ── ETFs mondiaux (Amundi, Euronext Paris) ────────────────────
+    for ticker, prefix, label in [
+        ("CW8.PA",   "cw8",   "MSCI World (CW8)"),
+        ("ESE.PA",   "ese",   "S&P 500 ETF (ESE)"),
+        ("PAEEM.PA", "paeem", "Marchés Émergents (PAEEM)"),
+        ("PAASI.PA", "paasi", "Asie Pac. ex-Japon (PAASI)"),
+    ]:
+        out.update(_etf_block(ticker, prefix, label))
 
     return out
 
