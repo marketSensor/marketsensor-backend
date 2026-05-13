@@ -1182,135 +1182,482 @@ def _altcoin_block(
 # MATIÈRES PREMIÈRES
 # ══════════════════════════════════════════════════════════════════
 
-def _matieres() -> dict:
+def _commodity_block(
+    ticker: str,
+    prefix: str,
+    label: str,
+    price_unit: str = "$",
+    round_price: int = 2,
+) -> dict:
+    """RSI, MACD, MM50, MM200 et perf 1 an pour un future ou ETF commodity."""
+    out = {}
+    try:
+        hist  = yf.Ticker(ticker).history(period="2y")
+        if hist.empty:
+            return out
+        close = hist["Close"]
+        price = float(close.iloc[-1])
+        p_str = f"{price_unit}{round(price, round_price):,}"
+
+        rsi_v = _rsi(close)
+        if rsi_v is not None:
+            out[f"rsi_{prefix}"] = _ind(
+                rsi_v, f"{rsi_v}  ({p_str})", "", _rsi_sig(rsi_v),
+                f"RSI {label} à {rsi_v} (cours : {p_str}) — "
+                + ("suracheté, risque de correction." if rsi_v > 70
+                   else "survendu — opportunité d'achat potentielle." if rsi_v < 30
+                   else "zone neutre, momentum équilibré."),
+            )
+
+        if len(close) >= 26:
+            mv, sv = _macd(close)
+            bull   = mv > sv
+            out[f"macd_{prefix}"] = _ind(
+                72 if bull else 28, "Positif" if bull else "Négatif", "",
+                "buy" if bull else "sell",
+                f"MACD {label} {'positif — tendance haussière confirmée.' if bull else 'négatif — tendance baissière en cours.'}",
+            )
+
+        if len(close) >= 50:
+            ma50    = float(close.rolling(50).mean().iloc[-1])
+            above50 = price > ma50
+            pct50   = round((price / ma50 - 1) * 100, 1)
+            out[f"mm50_{prefix}"] = _ind(
+                78 if above50 else 25,
+                f"{'+' if pct50 >= 0 else ''}{pct50} %", "",
+                "buy" if above50 else "sell",
+                f"{label} {'au-dessus' if above50 else 'en dessous'} de sa MM50 ({pct50:+.1f} %) — tendance court terme {'haussière.' if above50 else 'baissière.'}",
+            )
+
+        if len(close) >= 200:
+            ma200    = float(close.rolling(200).mean().iloc[-1])
+            above200 = price > ma200
+            pct200   = round((price / ma200 - 1) * 100, 1)
+            out[f"mm200_{prefix}"] = _ind(
+                83 if above200 else 20,
+                f"{'+' if pct200 >= 0 else ''}{pct200} %", "",
+                "buy" if above200 else "sell",
+                f"{label} {'au-dessus' if above200 else 'en dessous'} de sa MM200 ({pct200:+.1f} %) — tendance long terme {'haussière.' if above200 else 'baissière.'}",
+            )
+
+        if len(close) >= 250:
+            perf = round((float(close.iloc[-1]) / float(close.iloc[-250]) - 1) * 100, 1)
+            out[f"perf1y_{prefix}"] = _ind(
+                _norm(perf, -60, 120),
+                f"{'+' if perf >= 0 else ''}{perf} %", " (1 an)",
+                "buy" if perf > 10 else "sell" if perf < -10 else "neutral",
+                f"Performance {label} sur 12 mois : {perf:+.1f} %.",
+            )
+
+    except Exception as e:
+        print(f"[matieres] {ticker}: {e}")
+    return out
+
+
+
+def _commodity_block(ticker, prefix, label, price_unit="$", round_price=2):
+    """RSI, MACD, MM50, MM200 et perf 1 an pour un future ou ETF commodity."""
+    out = {}
+    try:
+        hist  = yf.Ticker(ticker).history(period="2y")
+        if hist.empty:
+            return out
+        close = hist["Close"]
+        price = float(close.iloc[-1])
+        p_str = price_unit + str(f"{round(price, round_price):,}")
+
+        # RSI
+        rsi_v = _rsi(close)
+        if rsi_v is not None:
+            if rsi_v > 70:   rsi_desc = "suracheté, risque de correction."
+            elif rsi_v < 30: rsi_desc = "survendu — opportunité d'achat potentielle."
+            else:            rsi_desc = "zone neutre, momentum équilibré."
+            out[f"rsi_{prefix}"] = _ind(
+                rsi_v, f"{rsi_v}  ({p_str})", "", _rsi_sig(rsi_v),
+                f"RSI {label} à {rsi_v} (cours : {p_str}) — {rsi_desc}",
+            )
+
+        # MACD
+        if len(close) >= 26:
+            mv, sv = _macd(close)
+            bull   = mv > sv
+            macd_desc = f"MACD {label} " + ("positif — tendance haussière confirmée." if bull else "négatif — tendance baissière en cours.")
+            out[f"macd_{prefix}"] = _ind(72 if bull else 28, "Positif" if bull else "Négatif", "",
+                "buy" if bull else "sell", macd_desc)
+
+        # MM50
+        if len(close) >= 50:
+            ma50    = float(close.rolling(50).mean().iloc[-1])
+            above50 = price > ma50
+            pct50   = round((price / ma50 - 1) * 100, 1)
+            dir50   = "au-dessus" if above50 else "en dessous"
+            trend50 = "haussière." if above50 else "baissière."
+            out[f"mm50_{prefix}"] = _ind(
+                78 if above50 else 25, f"{pct50:+.1f} %", "",
+                "buy" if above50 else "sell",
+                f"{label} {dir50} de sa MM50 ({pct50:+.1f} %) — tendance court terme {trend50}",
+            )
+
+        # MM200
+        if len(close) >= 200:
+            ma200    = float(close.rolling(200).mean().iloc[-1])
+            above200 = price > ma200
+            pct200   = round((price / ma200 - 1) * 100, 1)
+            dir200   = "au-dessus" if above200 else "en dessous"
+            trend200 = "haussière." if above200 else "baissière."
+            out[f"mm200_{prefix}"] = _ind(
+                83 if above200 else 20, f"{pct200:+.1f} %", "",
+                "buy" if above200 else "sell",
+                f"{label} {dir200} de sa MM200 ({pct200:+.1f} %) — tendance long terme {trend200}",
+            )
+
+        # Performance 1 an
+        if len(close) >= 250:
+            perf = round((float(close.iloc[-1]) / float(close.iloc[-250]) - 1) * 100, 1)
+            if perf > 30:    perf_desc = "Tendance long terme très haussière."
+            elif perf > 10:  perf_desc = "Bonne performance annuelle."
+            elif perf < -10: perf_desc = "Sous-performance sur l'année."
+            else:            perf_desc = "Performance neutre sur l'année."
+            out[f"perf1y_{prefix}"] = _ind(
+                _norm(perf, -60, 120), f"{perf:+.1f} %", " (1 an)",
+                "buy" if perf > 10 else "sell" if perf < -10 else "neutral",
+                f"Performance {label} sur 12 mois : {perf:+.1f} %. {perf_desc}",
+            )
+
+    except Exception as e:
+        print(f"[matieres] {ticker}: {e}")
+    return out
+
+
+# ══════════════════════════════════════════════════════════════════
+# MATIÈRES PREMIÈRES
+# ══════════════════════════════════════════════════════════════════
+
+def _matieres():
     out = {}
 
-    symbols = {
-        "gold":      "GC=F",
-        "silver":    "SI=F",
-        "platinum":  "PL=F",
-        "palladium": "PA=F",
-        "copper":    "HG=F",
-        "dxy":       "DX-Y.NYB",
-        "uranium":   "URA",
-    }
-
-    data: dict[str, pd.Series] = {}
-    for name, sym in symbols.items():
-        try:
-            h = yf.Ticker(sym).history(period="2y")
-            if not h.empty:
-                data[name] = h["Close"]
-        except Exception as e:
-            print(f"[matieres] {sym}: {e}")
-
-    # DXY
-    if "dxy" in data:
-        s      = data["dxy"]
+    # ── Macro & Dollar ────────────────────────────────────────────
+    try:
+        s      = yf.Ticker("DX-Y.NYB").history(period="2y")["Close"]
         p      = round(float(s.iloc[-1]), 1)
         ma200  = float(s.rolling(200).mean().iloc[-1])
         strong = p > ma200
+        desc   = "fort, pression sur les matières premières." if strong else "en repli, favorable aux matières premières."
         out["dxy"] = _ind(
             _norm(p, 90, 115), p, "",
             "sell" if strong else "buy",
-            f"DXY à {p} ({'au-dessus' if strong else 'en dessous'} de sa MM200 {ma200:.0f}) — "
-            f"dollar {'fort, pression sur les matières premières.' if strong else 'en repli, favorable aux matières premières.'}",
+            f"DXY à {p} (MM200 : {ma200:.0f}) — dollar {desc}",
         )
+    except Exception as e:
+        print(f"[matieres] DXY: {e}")
 
-    # RSI Or
-    if "gold" in data:
-        s  = data["gold"]
-        rv = _rsi(s)
-        p  = round(float(s.iloc[-1]))
-        if rv is not None:
-            out["goldrsi"] = _ind(
-                rv, rv, "", _rsi_sig(rv),
-                f"RSI Or (GC=F) à {rv}, prix ${p:,} — "
-                + ("or suracheté à court terme." if rv > 65
-                   else "or survendu, opportunité d'accumulation." if rv < 35
-                   else "zone neutre sur l'or."),
+    try:
+        tips = _fred("DFII10")
+        if tips:
+            t = tips[0]
+            if t < 0.5:  t_desc = "très favorable à l'or et aux actifs réels."
+            elif t > 2:  t_desc = "taux élevés, pression sur l'or et les matières premières."
+            else:        t_desc = "taux modérés, impact neutre sur les matières premières."
+            out["realrates"] = _ind(
+                _norm(t, -2, 4), f"{t:.1f} %", "",
+                "buy" if t < 0.5 else "sell" if t > 2 else "neutral",
+                f"Taux réels TIPS 10y à {t:.1f} % (FRED) — {t_desc}",
             )
+    except Exception as e:
+        print(f"[matieres] TIPS: {e}")
 
-    # Ratio Or / Argent
-    if "gold" in data and "silver" in data:
-        gp    = float(data["gold"].iloc[-1])
-        sp    = float(data["silver"].iloc[-1])
+    try:
+        cpi_obs = _fred("CPIAUCSL", limit=13)
+        if cpi_obs and len(cpi_obs) >= 13:
+            yoy = round((cpi_obs[0] / cpi_obs[12] - 1) * 100, 1)
+            if yoy > 2:  c_desc = "soutient les actifs tangibles et matières premières."
+            elif yoy < 1: c_desc = "inflation très basse, moins de soutien aux matières premières."
+            else:         c_desc = "inflation modérée."
+            out["cpi"] = _ind(
+                _norm(yoy, 0, 8), f"{yoy} %", "",
+                "buy" if yoy > 2 else "neutral" if yoy > 0.5 else "sell",
+                f"Inflation CPI à {yoy} % annualisé (FRED) — {c_desc}",
+            )
+    except Exception as e:
+        print(f"[matieres] CPI: {e}")
+
+    # ── Or ────────────────────────────────────────────────────────
+    out.update(_commodity_block("GC=F", "gold", "Or (GC=F)", "$", 0))
+
+    try:
+        gp    = float(yf.Ticker("GC=F").history(period="5d")["Close"].iloc[-1])
+        sp    = float(yf.Ticker("SI=F").history(period="5d")["Close"].iloc[-1])
         ratio = round(gp / sp, 1)
-        r_sig = "buy" if ratio > 75 else "sell" if ratio < 55 else "neutral"
+        if ratio > 75:  r_desc = "argent historiquement sous-évalué vs or (moy. ~65:1). Signal fort sur l'argent."
+        elif ratio < 55: r_desc = "argent surperformant l'or, ratio bas."
+        else:            r_desc = "ratio dans la normale historique."
         out["goldsil"] = _ind(
             _norm(ratio, 40, 100), f"{ratio}:1", "",
-            r_sig,
-            f"Ratio Or/Argent à {ratio}:1 (Or ${gp:,.0f} / Argent ${sp:.1f}) — "
-            + ("l'argent est historiquement sous-évalué vs l'or (moy. ~65:1)." if ratio > 75
-               else "argent surperformant l'or, ratio bas." if ratio < 55
-               else "ratio dans la normale historique."),
+            "buy" if ratio > 75 else "sell" if ratio < 55 else "neutral",
+            f"Ratio Or/Argent à {ratio}:1 (Or ${gp:,.0f} / Argent ${sp:.1f}) — {r_desc}",
         )
+    except Exception as e:
+        print(f"[matieres] Gold/Silver ratio: {e}")
 
-    # RSI Argent
-    if "silver" in data:
-        s  = data["silver"]
-        rv = _rsi(s)
-        if rv is not None:
-            out["sivrsi"] = _ind(
-                rv, rv, "", _rsi_sig(rv),
-                f"RSI Argent (SI=F) à {rv} — "
-                + ("suracheté." if rv > 65 else "survendu, opportunité." if rv < 35 else "zone neutre."),
-            )
+    out["cbgold"] = _ind(88, "Records", "", "buy",
+        "Achats records des banques centrales mondiales en 2023-2024 — demande institutionnelle forte (World Gold Council).")
 
-    # Platine vs Palladium
-    if "platinum" in data and "palladium" in data:
-        pt   = round(float(data["platinum"].iloc[-1]))
-        pd_  = round(float(data["palladium"].iloc[-1]))
-        r    = round(pt / pd_, 2)
-        pp_s = "buy" if r < 1.0 else "neutral" if r < 1.3 else "sell"
+    # ── Argent ────────────────────────────────────────────────────
+    out.update(_commodity_block("SI=F", "silver", "Argent (SI=F)", "$", 2))
+
+    # ── Pétrole & Énergie ─────────────────────────────────────────
+    out.update(_commodity_block("CL=F", "wti",   "Pétrole WTI (CL=F)",   "$", 2))
+    out.update(_commodity_block("BZ=F", "brent", "Pétrole Brent (BZ=F)", "$", 2))
+    out.update(_commodity_block("NG=F", "ng",    "Gaz Naturel (NG=F)",   "$", 3))
+
+    try:
+        gp  = float(yf.Ticker("GC=F").history(period="5d")["Close"].iloc[-1])
+        op  = float(yf.Ticker("CL=F").history(period="5d")["Close"].iloc[-1])
+        gor = round(gp / op, 1)
+        if gor > 30:  gor_desc = "or très cher vs pétrole — signal déflationniste ou récession."
+        elif gor < 15: gor_desc = "pétrole cher vs or — tensions d'offre ou expansion économique."
+        else:          gor_desc = "rapport équilibré, conditions macro normales."
+        out["gold_oil_ratio"] = _ind(
+            _norm(gor, 10, 40), f"{gor}:1", "",
+            "sell" if gor > 30 else "buy" if gor < 15 else "neutral",
+            f"Ratio Or/Pétrole à {gor}:1 — {gor_desc}",
+        )
+    except Exception as e:
+        print(f"[matieres] Gold/Oil ratio: {e}")
+
+    # ── Uranium & Nucléaire ───────────────────────────────────────
+    out.update(_commodity_block("URA",  "ura",  "Uranium ETF (URA)",         "$", 2))
+    out.update(_commodity_block("URNM", "urnm", "Sprott Uranium (URNM)",     "$", 2))
+    out.update(_commodity_block("CCJ",  "ccj",  "Cameco Corp (CCJ)",         "$", 2))
+    out["nuclear"] = _ind(88, "60+", " réacteurs", "buy",
+        "60+ réacteurs en construction mondiale — relance nucléaire massive. Déficit uranium offre/demande jusqu'à 2030+.")
+
+    # ── Platine & Palladium ───────────────────────────────────────
+    out.update(_commodity_block("PL=F", "platinum", "Platine (PL=F)", "$", 0))
+    out.update(_commodity_block("PA=F", "palladium", "Palladium (PA=F)", "$", 0))
+
+    try:
+        pt  = float(yf.Ticker("PL=F").history(period="5d")["Close"].iloc[-1])
+        pd_ = float(yf.Ticker("PA=F").history(period="5d")["Close"].iloc[-1])
+        r   = round(pt / pd_, 2)
+        if r < 1.0:  pp_desc = "platine à forte décote vs palladium — potentiel de rattrapage historique."
+        elif r < 1.3: pp_desc = "ratio normalisé, spread réduit."
+        else:         pp_desc = "platine à prime sur le palladium."
         out["platpall"] = _ind(
-            _norm(r, 0.3, 2.0), f"Pt ${pt:,} / Pd ${pd_:,}", "",
-            pp_s,
-            f"Platine ${pt:,} vs Palladium ${pd_:,} (ratio {r}) — "
-            + ("platine à forte décote, potentiel de rattrapage." if r < 1.0
-               else "ratio normalisé." if r < 1.3
-               else "platine à prime sur le palladium."),
+            _norm(r, 0.3, 2.0), f"Pt ${int(pt):,} / Pd ${int(pd_):,}", "",
+            "buy" if r < 1.0 else "neutral" if r < 1.3 else "sell",
+            f"Platine ${int(pt):,} vs Palladium ${int(pd_):,} (ratio {r}) — {pp_desc}",
         )
+    except Exception as e:
+        print(f"[matieres] Plat/Pall: {e}")
 
-    # Cuivre
-    if "copper" in data:
-        s  = data["copper"]
-        rv = _rsi(s)
-        p  = round(float(s.iloc[-1]), 2)
-        if rv is not None:
-            out["copper"] = _ind(
-                rv, f"${p}/lb", "", _rsi_sig(rv),
-                f"Cuivre (HG=F) à ${p}/lb, RSI {rv} — "
-                + ("suracheté." if rv > 65
-                   else "survendu sur fond de demande structurelle forte." if rv < 35
-                   else "demande soutenue par la transition énergétique (IA, EVs)."),
-            )
-
-    # Uranium ETF (URA)
-    if "uranium" in data:
-        s  = data["uranium"]
-        rv = _rsi(s)
-        p  = round(float(s.iloc[-1]), 2)
-        if rv is not None:
-            out["ursi"]  = _ind(rv, rv, "", _rsi_sig(rv),
-                f"RSI URA ETF à {rv} — {'suracheté.' if rv>65 else 'survendu.' if rv<35 else 'zone neutre, tendance long terme haussière.'}")
-            out["uspot"] = _ind(
-                _norm(p, 15, 65), f"${p}", " (URA ETF)",
-                "buy" if p > 25 else "neutral",
-                f"URA ETF (proxy uranium) à ${p} — déficit structurel offre/demande jusqu'à 2030+.",
-            )
+    # ── Métaux Industriels ────────────────────────────────────────
+    out.update(_commodity_block("HG=F",  "copper", "Cuivre (HG=F)",     "$/lb", 2))
+    out.update(_commodity_block("ALI=F", "alum",   "Aluminium (ALI=F)", "$/lb", 4))
 
     return out
 
 
 # ══════════════════════════════════════════════════════════════════
-# POINT D'ENTRÉE
+# ANALYTICS — CORRÉLATIONS, DIVERGENCES, BACKTESTING
+# ══════════════════════════════════════════════════════════════════
+
+def _rsi_series(series: pd.Series, period: int = 14) -> pd.Series:
+    """Retourne la série RSI complète (pas seulement la dernière valeur)."""
+    delta = series.diff().dropna()
+    gain  = delta.clip(lower=0).ewm(com=period-1, min_periods=period).mean()
+    loss  = (-delta.clip(upper=0)).ewm(com=period-1, min_periods=period).mean()
+    rs    = gain / loss.replace(0, np.nan)
+    return 100 - 100 / (1 + rs)
+
+
+def _correlations() -> dict:
+    """
+    Matrice de corrélation des rendements journaliers sur 1 an.
+    Retourne les noms des actifs et la matrice (liste de listes).
+    """
+    assets = {
+        "S&P 500":    "^GSPC",
+        "Bitcoin":    "BTC-USD",
+        "Ethereum":   "ETH-USD",
+        "Solana":     "SOL-USD",
+        "Or":         "GC=F",
+        "Argent":     "SI=F",
+        "Pétrole WTI":"CL=F",
+        "DXY":        "DX-Y.NYB",
+    }
+    prices: dict[str, pd.Series] = {}
+    for name, ticker in assets.items():
+        try:
+            h = yf.Ticker(ticker).history(period="1y")["Close"]
+            if len(h) > 50:
+                prices[name] = h
+        except Exception as e:
+            print(f"[corr] {ticker}: {e}")
+
+    if len(prices) < 2:
+        return {}
+
+    df      = pd.DataFrame(prices).pct_change().dropna()
+    corr    = df.corr()
+    cols    = list(corr.columns)
+    matrix  = [[round(float(corr.loc[r, c]), 3) for c in cols] for r in cols]
+    return {"assets": cols, "matrix": matrix}
+
+
+def _divergences() -> list[dict]:
+    """
+    Détecte les divergences haussières et baissières prix/RSI
+    sur les 20 derniers jours (pente de régression linéaire).
+    """
+    assets = {
+        "^GSPC":    "S&P 500",
+        "BTC-USD":  "Bitcoin",
+        "ETH-USD":  "Ethereum",
+        "SOL-USD":  "Solana",
+        "GC=F":     "Or",
+        "CL=F":     "Pétrole WTI",
+        "HG=F":     "Cuivre",
+    }
+    result = []
+    WINDOW = 20
+
+    for ticker, name in assets.items():
+        try:
+            close = yf.Ticker(ticker).history(period="1y")["Close"]
+            if len(close) < WINDOW + 14:
+                continue
+
+            rsi_s   = _rsi_series(close)
+            p_rec   = close.tail(WINDOW).values
+            r_rec   = rsi_s.tail(WINDOW).dropna().values
+            if len(r_rec) < WINDOW:
+                continue
+
+            x            = np.arange(WINDOW, dtype=float)
+            p_slope      = np.polyfit(x, p_rec, 1)[0]
+            r_slope      = np.polyfit(x, r_rec, 1)[0]
+            p_slope_pct  = p_slope / abs(p_rec[0]) * 100  # en % par jour
+
+            # Seuils : divergence significative uniquement
+            PRICE_THR = 0.05   # >0.05% par jour
+            RSI_THR   = 0.15   # >0.15 pt RSI par jour
+
+            if p_slope_pct < -PRICE_THR and r_slope > RSI_THR:
+                result.append({
+                    "asset": name, "type": "bullish",
+                    "sig": "buy",
+                    "desc": (f"{name} : divergence haussière — prix en baisse "
+                             f"({p_slope_pct:+.2f}%/j) mais RSI en hausse "
+                             f"({r_slope:+.2f}pt/j). Signal fort d'inversion potentielle."),
+                })
+            elif p_slope_pct > PRICE_THR and r_slope < -RSI_THR:
+                result.append({
+                    "asset": name, "type": "bearish",
+                    "sig": "sell",
+                    "desc": (f"{name} : divergence baissière — prix en hausse "
+                             f"({p_slope_pct:+.2f}%/j) mais RSI en baisse "
+                             f"({r_slope:+.2f}pt/j). Risque de retournement à court terme."),
+                })
+        except Exception as e:
+            print(f"[div] {ticker}: {e}")
+
+    return result
+
+
+def _backtest() -> list[dict]:
+    """
+    Backtesting historique : performance 90j après chaque signal RSI.
+    Utilise l'historique complet disponible sur yfinance.
+    """
+    assets = [
+        ("BTC-USD", "Bitcoin",  35, 70),
+        ("ETH-USD", "Ethereum", 35, 70),
+        ("^GSPC",   "S&P 500",  35, 70),
+        ("GC=F",    "Or",       35, 70),
+        ("SOL-USD", "Solana",   35, 70),
+    ]
+    FWD   = 90    # jours de rendement forward
+    results = []
+
+    for ticker, name, buy_thr, sell_thr in assets:
+        try:
+            close = yf.Ticker(ticker).history(period="max")["Close"]
+            if len(close) < 200:
+                continue
+
+            rsi_s = _rsi_series(close)
+
+            for label, lo, hi, direction in [
+                (f"RSI < {buy_thr} (survente)",   None, buy_thr,  "buy"),
+                (f"RSI > {sell_thr} (surachat)",  sell_thr, None,  "sell"),
+            ]:
+                # Détecter les croisements de seuil
+                crossings = []
+                for i in range(1, len(rsi_s) - FWD):
+                    v_prev = rsi_s.iloc[i - 1]
+                    v_curr = rsi_s.iloc[i]
+                    if np.isnan(v_prev) or np.isnan(v_curr):
+                        continue
+                    if direction == "buy"  and v_prev >= buy_thr  and v_curr < buy_thr:
+                        crossings.append(i)
+                    if direction == "sell" and v_prev <= sell_thr and v_curr > sell_thr:
+                        crossings.append(i)
+
+                if not crossings:
+                    continue
+
+                rets = []
+                for idx in crossings:
+                    if idx + FWD < len(close):
+                        r = (float(close.iloc[idx + FWD]) / float(close.iloc[idx]) - 1) * 100
+                        rets.append(round(r, 1))
+
+                if not rets:
+                    continue
+
+                avg      = round(sum(rets) / len(rets), 1)
+                win_rate = round(sum(1 for r in rets if (r > 0) == (direction == "buy")) / len(rets) * 100)
+                results.append({
+                    "asset":        name,
+                    "signal":       label,
+                    "direction":    direction,
+                    "occurrences":  len(rets),
+                    "avg_90d":      avg,
+                    "win_rate":     win_rate,
+                    "last_5":       rets[-5:],
+                })
+        except Exception as e:
+            print(f"[backtest] {ticker}: {e}")
+
+    return results
+
+
 # ══════════════════════════════════════════════════════════════════
 
 def get_all() -> dict:
+    import concurrent.futures as cf
+    with cf.ThreadPoolExecutor(max_workers=4) as ex:
+        f_b    = ex.submit(_bourse)
+        f_c    = ex.submit(_crypto)
+        f_m    = ex.submit(_matieres)
+        f_corr = ex.submit(_correlations)
+        f_div  = ex.submit(_divergences)
+        f_back = ex.submit(_backtest)
+        bourse      = f_b.result()
+        crypto      = f_c.result()
+        matieres    = f_m.result()
+        correlations= f_corr.result()
+        divergences = f_div.result()
+        backtest    = f_back.result()
     return {
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "bourse":    _bourse(),
-        "crypto":    _crypto(),
-        "matieres":  _matieres(),
+        "bourse":    bourse,
+        "crypto":    crypto,
+        "matieres":  matieres,
+        "analytics": {
+            "correlations": correlations,
+            "divergences":  divergences,
+            "backtest":     backtest,
+        },
     }
