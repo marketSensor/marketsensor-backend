@@ -253,36 +253,56 @@ async def get_calendar(days: int = 60):
     return {"events": upcoming, "count": len(upcoming)}
 
 @app.get("/api/analytics", tags=["analytics"])
-async def get_analytics_endpoint(force: bool = False):
+async def get_analytics_endpoint():
     """
     Analytics avancées : corrélations, divergences, backtesting.
-    Cache 4h — calcul ~30-60s au premier appel.
+    Attend que le cache principal soit prêt (= _PRICE_STORE rempli).
+    Cache propre 4h.
     """
     global _analytics_cache
-    now = time.time()
-    stale = not _analytics_cache["data"] or (now - _analytics_cache["ts"]) > ANALYTICS_TTL
 
-    if force or stale:
-        if not _analytics_cache["loading"]:
-            _analytics_cache["loading"] = True
-            try:
-                data = await asyncio.to_thread(indicators.get_analytics)
-                _analytics_cache["data"] = data
-                _analytics_cache["ts"]   = time.time()
-                log.info(f"[analytics] Cache mis à jour — {len(data.get('backtest', []))} backtest(s)")
-            except Exception as e:
-                log.error(f"[analytics] Erreur : {e}")
-            finally:
-                _analytics_cache["loading"] = False
-        else:
-            # Déjà en cours de calcul — attendre max 90s
-            for _ in range(90):
-                await asyncio.sleep(1)
-                if not _analytics_cache["loading"]:
-                    break
+    # Attendre que get_all() ait tourné au moins une fois (remplit _PRICE_STORE)
+    waited = 0
+    while not _cache["data"] and waited < 300:
+        await asyncio.sleep(5)
+        waited += 5
+
+    if not _cache["data"]:
+        return JSONResponse(
+            {"error": "Cache principal non disponible — réessayez dans 30s."},
+            status_code=503,
+        )
+
+    # Vérifier si le cache analytics est encore valide
+    now   = time.time()
+    stale = (not _analytics_cache["data"] or
+             (now - _analytics_cache["ts"]) > ANALYTICS_TTL)
+
+    if stale and not _analytics_cache["loading"]:
+        _analytics_cache["loading"] = True
+        try:
+            data = await asyncio.to_thread(indicators.get_analytics)
+            _analytics_cache["data"] = data
+            _analytics_cache["ts"]   = time.time()
+            log.info(f"[analytics] OK — corr:{len(data.get('correlations',{}).get('assets',[]))} "
+                     f"div:{len(data.get('divergences',[]))} back:{len(data.get('backtest',[]))}")
+        except Exception as e:
+            log.error(f"[analytics] Erreur : {e}")
+        finally:
+            _analytics_cache["loading"] = False
+
+    elif stale and _analytics_cache["loading"]:
+        # Calcul en cours dans un autre contexte — attendre max 120s
+        for _ in range(120):
+            await asyncio.sleep(1)
+            if not _analytics_cache["loading"]:
+                break
 
     if not _analytics_cache["data"]:
-        return JSONResponse({"error": "Analytics en cours de calcul, réessayez dans 30s."}, status_code=503)
+        return JSONResponse(
+            {"error": "Calcul analytics échoué — réessayez."},
+            status_code=503,
+        )
 
     return JSONResponse(_analytics_cache["data"])
 
