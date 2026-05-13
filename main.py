@@ -255,54 +255,51 @@ async def get_calendar(days: int = 60):
 @app.get("/api/analytics", tags=["analytics"])
 async def get_analytics_endpoint():
     """
-    Analytics avancées : corrélations, divergences, backtesting.
-    Attend que le cache principal soit prêt (= _PRICE_STORE rempli).
-    Cache propre 4h.
+    Non-bloquant : retourne 202 si les données ne sont pas encore prêtes,
+    200 + JSON dès que _PRICE_STORE est rempli.
     """
     global _analytics_cache
 
-    # Attendre que get_all() ait tourné au moins une fois (remplit _PRICE_STORE)
-    waited = 0
-    while not _cache["data"] and waited < 300:
-        await asyncio.sleep(5)
-        waited += 5
+    store_size = len(indicators._PRICE_STORE)
 
-    if not _cache["data"]:
-        return JSONResponse(
-            {"error": "Cache principal non disponible — réessayez dans 30s."},
-            status_code=503,
-        )
+    # Pas encore de données → retour immédiat avec statut
+    if store_size < 5:
+        return JSONResponse({
+            "status":     "computing",
+            "store_size": store_size,
+            "message":    f"Données en cours de téléchargement ({store_size} actifs prêts)…",
+        }, status_code=202)
 
-    # Vérifier si le cache analytics est encore valide
+    # Cache encore valide → retourner directement
     now   = time.time()
     stale = (not _analytics_cache["data"] or
              (now - _analytics_cache["ts"]) > ANALYTICS_TTL)
 
-    if stale and not _analytics_cache["loading"]:
-        _analytics_cache["loading"] = True
-        try:
-            data = await asyncio.to_thread(indicators.get_analytics)
-            _analytics_cache["data"] = data
-            _analytics_cache["ts"]   = time.time()
-            log.info(f"[analytics] OK — corr:{len(data.get('correlations',{}).get('assets',[]))} "
-                     f"div:{len(data.get('divergences',[]))} back:{len(data.get('backtest',[]))}")
-        except Exception as e:
-            log.error(f"[analytics] Erreur : {e}")
-        finally:
-            _analytics_cache["loading"] = False
+    if not stale:
+        return JSONResponse(_analytics_cache["data"])
 
-    elif stale and _analytics_cache["loading"]:
-        # Calcul en cours dans un autre contexte — attendre max 120s
-        for _ in range(120):
+    # Calcul en cours dans un autre thread → attendre max 30s
+    if _analytics_cache["loading"]:
+        for _ in range(30):
             await asyncio.sleep(1)
             if not _analytics_cache["loading"]:
                 break
+        if _analytics_cache["data"]:
+            return JSONResponse(_analytics_cache["data"])
 
-    if not _analytics_cache["data"]:
-        return JSONResponse(
-            {"error": "Calcul analytics échoué — réessayez."},
-            status_code=503,
-        )
-
-    return JSONResponse(_analytics_cache["data"])
+    # Lancer le calcul (rapide car depuis _PRICE_STORE)
+    _analytics_cache["loading"] = True
+    try:
+        data = await asyncio.to_thread(indicators.get_analytics)
+        _analytics_cache["data"] = data
+        _analytics_cache["ts"]   = time.time()
+        log.info(f"[analytics] OK — store:{store_size} "
+                 f"corr:{len(data.get('correlations',{}).get('assets',[]))} "
+                 f"back:{len(data.get('backtest',[]))}")
+        return JSONResponse(data)
+    except Exception as e:
+        log.error(f"[analytics] Erreur : {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        _analytics_cache["loading"] = False
 
