@@ -36,47 +36,57 @@ HISTORY_MAX_ITEMS   = 90 * 24                  # ~90 jours à 1 rafraîch./heure
 
 # ── Calendrier macro (événements programmés) ──────────────────────
 MACRO_CALENDAR = [
-    # Fed (FOMC) 2025
-    {"date": "2025-06-17", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    {"date": "2025-07-29", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    {"date": "2025-09-16", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    {"date": "2025-10-28", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    {"date": "2025-12-16", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    # Fed 2026
-    {"date": "2026-01-27", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    {"date": "2026-03-17", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    {"date": "2026-05-05", "event": "Réunion Fed (FOMC)",           "impact": "high",   "category": "bourse"},
-    # CPI USA 2025-2026 (2e mardi de chaque mois environ)
-    {"date": "2025-06-11", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2025-07-11", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2025-08-13", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2025-09-10", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2025-10-15", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2025-11-12", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2025-12-10", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2026-01-14", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2026-02-11", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    {"date": "2026-03-11", "event": "CPI USA (inflation)",          "impact": "high",   "category": "bourse"},
-    # Bitcoin
-    {"date": "2028-04-17", "event": "Halving Bitcoin #5 (estimé)",  "impact": "high",   "category": "crypto"},
-    # Ethereum
-    {"date": "2025-09-01", "event": "Ethereum Pectra upgrade",      "impact": "medium", "category": "crypto"},
-    # OPEC
-    {"date": "2025-06-01", "event": "Réunion OPEC+",               "impact": "high",   "category": "matieres"},
-    {"date": "2025-11-01", "event": "Réunion OPEC+",               "impact": "high",   "category": "matieres"},
-    # Jackson Hole
-    {"date": "2025-08-22", "event": "Symposium Jackson Hole (Fed)", "impact": "high",   "category": "bourse"},
-    # NFP (Non-Farm Payrolls) — 1er vendredi du mois
-    {"date": "2025-06-06", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2025-07-04", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2025-08-01", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2025-09-05", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2025-10-03", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2025-11-07", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2025-12-05", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2026-01-09", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2026-02-06", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
-    {"date": "2026-03-06", "event": "NFP — Emploi USA",            "impact": "medium", "category": "bourse"},
+    # ── Fed (FOMC) 2026 ──────────────────────────────────────────
+    {"date": "2026-06-16", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    {"date": "2026-07-28", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    {"date": "2026-09-15", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    {"date": "2026-10-27", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    {"date": "2026-12-15", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    # ── Fed 2027 ─────────────────────────────────────────────────
+    {"date": "2027-01-26", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    {"date": "2027-03-16", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    {"date": "2027-05-04", "event": "Réunion Fed (FOMC)",            "impact": "high",   "category": "bourse"},
+    # ── CPI USA 2026 ─────────────────────────────────────────────
+    {"date": "2026-05-13", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-06-10", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-07-15", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-08-12", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-09-09", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-10-14", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-11-12", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2026-12-10", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    # ── CPI USA 2027 ─────────────────────────────────────────────
+    {"date": "2027-01-13", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2027-02-10", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    {"date": "2027-03-10", "event": "CPI USA (inflation)",           "impact": "high",   "category": "bourse"},
+    # ── NFP — Emploi USA 2026 ─────────────────────────────────────
+    {"date": "2026-06-05", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    {"date": "2026-07-02", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    {"date": "2026-08-07", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    {"date": "2026-09-04", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    {"date": "2026-10-02", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    {"date": "2026-11-06", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    {"date": "2026-12-04", "event": "NFP — Emploi USA",             "impact": "medium", "category": "bourse"},
+    # ── Jackson Hole 2026 ────────────────────────────────────────
+    {"date": "2026-08-21", "event": "Symposium Jackson Hole (Fed)",  "impact": "high",   "category": "bourse"},
+    # ── OPEC+ 2026 ───────────────────────────────────────────────
+    {"date": "2026-06-01", "event": "Réunion OPEC+",                "impact": "high",   "category": "matieres"},
+    {"date": "2026-11-02", "event": "Réunion OPEC+",                "impact": "high",   "category": "matieres"},
+    # ── Ethereum ─────────────────────────────────────────────────
+    {"date": "2026-09-15", "event": "Ethereum — mise à jour réseau", "impact": "medium", "category": "crypto"},
+    # ── Bitcoin ──────────────────────────────────────────────────
+    {"date": "2028-04-17", "event": "Halving Bitcoin #5 (estimé)",   "impact": "high",   "category": "crypto"},
+    # ── BCE (Banque Centrale Européenne) 2026 ────────────────────
+    {"date": "2026-06-04", "event": "Réunion BCE",                  "impact": "high",   "category": "bourse"},
+    {"date": "2026-07-23", "event": "Réunion BCE",                  "impact": "high",   "category": "bourse"},
+    {"date": "2026-09-10", "event": "Réunion BCE",                  "impact": "high",   "category": "bourse"},
+    {"date": "2026-10-22", "event": "Réunion BCE",                  "impact": "high",   "category": "bourse"},
+    {"date": "2026-12-10", "event": "Réunion BCE",                  "impact": "high",   "category": "bourse"},
+    # ── Or & Métaux ───────────────────────────────────────────────
+    {"date": "2026-06-03", "event": "World Gold Council — rapport T1", "impact": "medium", "category": "matieres"},
+    {"date": "2026-09-01", "event": "World Gold Council — rapport T2", "impact": "medium", "category": "matieres"},
+    # ── Uranium ───────────────────────────────────────────────────
+    {"date": "2026-09-07", "event": "World Nuclear Association Symposium", "impact": "medium", "category": "matieres"},
 ]
 
 
