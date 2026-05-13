@@ -633,7 +633,330 @@ def _bitbo(endpoint: str) -> float | None:
     return None
 
 
-def _crypto() -> dict:
+# ══════════════════════════════════════════════════════════════════
+# DONNÉES STATIQUES — CYCLES HALVING
+# ══════════════════════════════════════════════════════════════════
+
+HALVINGS = [
+    {"n": 1, "date": "2012-11-28", "price_at":    12, "peak":   1_163, "peak_date": "2013-11-30", "gain": "+9 600 %"},
+    {"n": 2, "date": "2016-07-09", "price_at":   650, "peak":  19_891, "peak_date": "2017-12-17", "gain": "+2 960 %"},
+    {"n": 3, "date": "2020-05-11", "price_at": 8_600, "peak":  68_789, "peak_date": "2021-11-10", "gain":   "+700 %"},
+    {"n": 4, "date": "2024-04-20", "price_at": 63_800, "peak": None,   "peak_date": None,         "gain": "en cours"},
+]
+NEXT_HALVING_DATE = dt.date(2028, 4, 17)   # estimation bloc 1 050 000
+
+# ══════════════════════════════════════════════════════════════════
+# INDICATEURS SOCIAUX
+# ══════════════════════════════════════════════════════════════════
+
+def _google_trends_bitcoin() -> dict | None:
+    """
+    Intérêt de recherche Google pour 'Bitcoin' sur 90 jours.
+    Retourne la valeur actuelle (0-100) et la moyenne sur la période.
+    Nécessite pytrends.
+    """
+    try:
+        from pytrends.request import TrendReq
+        pt = TrendReq(hl="en-US", tz=0, timeout=(10, 30), retries=1, backoff_factor=0.5)
+        pt.build_payload(["Bitcoin"], timeframe="today 3-m", geo="")
+        df = pt.interest_over_time()
+        if df is None or df.empty:
+            return None
+        current = int(df["Bitcoin"].iloc[-1])
+        avg_90d = int(df["Bitcoin"].mean())
+        peak_90d = int(df["Bitcoin"].max())
+        return {"current": current, "avg_90d": avg_90d, "peak_90d": peak_90d}
+    except Exception as e:
+        print(f"[social] Google Trends: {e}")
+        return None
+
+
+def _appstore_ranking(app_id: str, country: str = "us") -> int | None:
+    """
+    Classement App Store d'une app via l'API iTunes.
+    Retourne le classement dans la catégorie Finance (top 100).
+    """
+    try:
+        # Récupère les 100 meilleures apps Finance (top grossing)
+        url = f"https://itunes.apple.com/{country}/rss/topgrossingapplications/limit=100/genre=6015/json"
+        r   = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        entries = r.json()["feed"]["entry"]
+        for i, entry in enumerate(entries, 1):
+            if entry["id"]["attributes"]["im:id"] == app_id:
+                return i
+        return None   # pas dans le top 100
+    except Exception as e:
+        print(f"[social] App Store {app_id}: {e}")
+        return None
+
+
+def _halving_indicators() -> dict:
+    """
+    Calcule tous les indicateurs liés aux halvings Bitcoin :
+    - jours depuis le dernier halving
+    - jours jusqu'au prochain halving
+    - % du cycle écoulé
+    - contexte historique des cycles précédents
+    """
+    out  = {}
+    today      = dt.date.today()
+    last_h     = HALVINGS[-1]
+    last_date  = dt.date.fromisoformat(last_h["date"])
+    days_since = (today - last_date).days
+    days_until = (NEXT_HALVING_DATE - today).days
+    cycle_len  = (NEXT_HALVING_DATE - last_date).days   # ~1 461 j
+    pct_cycle  = round(days_since / cycle_len * 100, 1)
+
+    # ── Jours depuis le dernier halving ──────────────────────────
+    # Phase du cycle : < 365j = early, < 730j = mid, < 1095j = late
+    if days_since < 365:
+        phase, phase_sig = "Phase précoce (< 1 an)", "buy"
+    elif days_since < 730:
+        phase, phase_sig = "Phase intermédiaire (1-2 ans)", "neutral"
+    elif days_since < 1095:
+        phase, phase_sig = "Phase tardive (2-3 ans)", "sell"
+    else:
+        phase, phase_sig = "Fin de cycle (> 3 ans)", "sell"
+
+    hist_lines = " | ".join(
+        f"H{h['n']} ({h['date'][:4]}) : ${h['price_at']:,} → "
+        + (f"pic ${h['peak']:,}" if h['peak'] else "en cours")
+        + f" ({h['gain']})"
+        for h in HALVINGS
+    )
+
+    out["days_since_halving"] = _ind(
+        _norm(days_since, 0, cycle_len),
+        f"{days_since} jours", f" ({pct_cycle} % du cycle)",
+        phase_sig,
+        f"Halving 4 le {last_h['date']} — {days_since} jours écoulés "
+        f"({pct_cycle} % du cycle de ~{cycle_len} j). {phase}. "
+        f"Historique : {hist_lines}",
+    )
+
+    # ── Jours jusqu'au prochain halving ──────────────────────────
+    days_util_pct = round(days_until / cycle_len * 100)
+    dh_sig = "buy" if days_until > 900 else "neutral" if days_until > 400 else "sell"
+    out["days_until_halving"] = _ind(
+        100 - _norm(days_until, 0, cycle_len),
+        f"{max(0, days_until)} jours", f" (~{NEXT_HALVING_DATE})",
+        dh_sig,
+        f"Prochain halving estimé autour du {NEXT_HALVING_DATE} "
+        f"(bloc 1 050 000) — dans ~{max(0, days_until)} jours. "
+        f"Historiquement, les 12-18 mois précédant un halving sont haussiers.",
+    )
+
+    # ── Progression du cycle ──────────────────────────────────────
+    out["cycle_progress"] = _ind(
+        int(pct_cycle),
+        f"{pct_cycle} %", f" du cycle H4",
+        phase_sig,
+        f"Cycle post-halving H4 à {pct_cycle} % — {phase}. "
+        f"Les cycles précédents ont duré en moyenne 3,5 ans avec un pic à ~12-18 mois. "
+        f"Modèle de rendement décroissant : H1 +9600 %, H2 +2960 %, H3 +700 %.",
+    )
+
+    return out
+
+
+def _social_indicators() -> dict:
+    """Agrège tous les indicateurs sociaux crypto."""
+    out = {}
+
+    # ── Google Trends — 'Bitcoin' ─────────────────────────────────
+    trends = _google_trends_bitcoin()
+    if trends:
+        v   = trends["current"]
+        avg = trends["avg_90d"]
+        pk  = trends["peak_90d"]
+        # Intérêt > 75 = FOMO retail (signal de prudence)
+        # Intérêt < 25 = désintérêt total (signal d'accumulation)
+        t_sig = "sell" if v > 75 else "buy" if v < 25 else "neutral"
+        out["google_trends"] = _ind(
+            v, v, "/100",
+            t_sig,
+            f"Google Trends 'Bitcoin' à {v}/100 (moy. 90j : {avg}, pic 90j : {pk}) — "
+            + ("intérêt très élevé, signal de FOMO retail souvent associé aux sommets." if v > 75
+               else "intérêt très faible, désintérêt du grand public — zone d'accumulation historique." if v < 25
+               else f"intérêt {'supérieur' if v > avg else 'inférieur'} à la moyenne des 90 derniers jours."),
+        )
+
+    # ── Classement App Store — Coinbase & Binance ─────────────────
+    # Coinbase : 886427730, Binance : 1436799971
+    coinbase_rank = _appstore_ranking("886427730", "us")
+    binance_rank  = _appstore_ranking("1436799971", "us")
+
+    if coinbase_rank is not None:
+        # Classement bas (top 10 Finance) = euphorie retail
+        cb_sig = "sell" if coinbase_rank <= 5 else "buy" if coinbase_rank > 50 else "neutral"
+        out["coinbase_rank"] = _ind(
+            _norm(101 - coinbase_rank, 1, 100),
+            f"#{coinbase_rank}", " Finance App Store",
+            cb_sig,
+            f"Coinbase #{coinbase_rank} App Store Finance (US) — "
+            + (f"top 5 ! Afflux massif de retail, souvent associé aux pics de marché." if coinbase_rank <= 5
+               else f"classement modéré, pas d'euphorie retail détectée." if coinbase_rank > 20
+               else f"intérêt retail soutenu."),
+        )
+
+    if binance_rank is not None:
+        bn_sig = "sell" if binance_rank <= 5 else "buy" if binance_rank > 50 else "neutral"
+        out["binance_rank"] = _ind(
+            _norm(101 - binance_rank, 1, 100),
+            f"#{binance_rank}", " Finance App Store",
+            bn_sig,
+            f"Binance #{binance_rank} App Store Finance (US) — "
+            + (f"dans le top 5, signal d'euphorie retail possible." if binance_rank <= 5
+               else f"classement normal, pas de FOMO détecté."),
+        )
+
+    # ── Indicateurs halving ───────────────────────────────────────
+    out.update(_halving_indicators())
+
+    return out
+
+
+def _altcoin_block(
+    ticker_yf: str,
+    cg_id: str,
+    prefix: str,
+    label: str,
+    btc_close: "pd.Series | None" = None,
+) -> dict:
+    """
+    Génère RSI, MACD, MM50, MM200, Bollinger, ATR et perf vs BTC
+    pour n'importe quel altcoin.
+    Essaie yfinance d'abord, puis CoinGecko en fallback.
+    """
+    out   = {}
+    close = None
+    hist  = None
+
+    # ── 1. yfinance ──────────────────────────────────────────────
+    try:
+        h = yf.Ticker(ticker_yf).history(period="2y")
+        if not h.empty:
+            hist  = h
+            close = h["Close"]
+    except Exception as e:
+        print(f"[altcoin] yfinance {ticker_yf}: {e}")
+
+    # ── 2. CoinGecko (fallback ou token récent) ───────────────────
+    if (close is None or len(close) < 30) and cg_id:
+        try:
+            url = (
+                f"https://api.coingecko.com/api/v3/coins/{cg_id}/market_chart"
+                f"?vs_currency=usd&days=365&interval=daily"
+            )
+            r    = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            rows = r.json().get("prices", [])
+            if rows:
+                close = pd.Series([p[1] for p in rows])
+                hist  = None   # pas de OHLC, seulement close
+        except Exception as e:
+            print(f"[altcoin] CoinGecko {cg_id}: {e}")
+
+    if close is None or len(close) < 20:
+        print(f"[altcoin] Pas assez de données pour {label}")
+        return out
+
+    price = float(close.iloc[-1])
+
+    # ── RSI ───────────────────────────────────────────────────────
+    rsi_v = _rsi(close)
+    if rsi_v is not None:
+        out[f"rsi_{prefix}"] = _ind(
+            rsi_v, rsi_v, "", _rsi_sig(rsi_v),
+            f"RSI {label} à {rsi_v} — "
+            + ("suracheté, risque de correction." if rsi_v > 70
+               else "survendu — opportunité potentielle." if rsi_v < 30
+               else "zone neutre, momentum équilibré."),
+        )
+
+    # ── MACD ──────────────────────────────────────────────────────
+    if len(close) >= 26:
+        mv, sv = _macd(close)
+        bull   = mv > sv
+        out[f"macd_{prefix}"] = _ind(
+            72 if bull else 28, "Positif" if bull else "Négatif", "",
+            "buy" if bull else "sell",
+            f"MACD {label} {'positif — tendance haussière confirmée.' if bull else 'négatif — tendance baissière en cours.'}",
+        )
+
+    # ── MM50 ──────────────────────────────────────────────────────
+    if len(close) >= 50:
+        ma50    = float(close.rolling(50).mean().iloc[-1])
+        above50 = price > ma50
+        pct50   = round((price / ma50 - 1) * 100, 1)
+        out[f"mm50_{prefix}"] = _ind(
+            78 if above50 else 25,
+            f"{'+ ' if pct50 >= 0 else ''}{pct50} %", "",
+            "buy" if above50 else "sell",
+            f"{label} {'au-dessus' if above50 else 'en dessous'} de sa MM50 "
+            f"({'+' if pct50 >= 0 else ''}{pct50} %) — tendance court terme {'haussière.' if above50 else 'baissière.'}",
+        )
+
+    # ── MM200 ─────────────────────────────────────────────────────
+    if len(close) >= 200:
+        ma200    = float(close.rolling(200).mean().iloc[-1])
+        above200 = price > ma200
+        pct200   = round((price / ma200 - 1) * 100, 1)
+        out[f"mm200_{prefix}"] = _ind(
+            83 if above200 else 20,
+            f"{'+ ' if pct200 >= 0 else ''}{pct200} %", "",
+            "buy" if above200 else "sell",
+            f"{label} {'au-dessus' if above200 else 'en dessous'} de sa MM200 "
+            f"({'+' if pct200 >= 0 else ''}{pct200} %) — tendance long terme {'haussière.' if above200 else 'baissière.'}",
+        )
+
+    # ── Bollinger Bands ───────────────────────────────────────────
+    boll = _bollinger_pct(close)
+    if boll is not None:
+        b_sig = "sell" if boll > 80 else "buy" if boll < 20 else "neutral"
+        out[f"bollinger_{prefix}"] = _ind(
+            boll, f"{boll} %", "",
+            b_sig,
+            f"Bollinger {label} à {boll} % — "
+            + ("proche bande haute, risque de retournement." if boll > 80
+               else "proche bande basse, rebond possible." if boll < 20
+               else "zone centrale, compression de volatilité."),
+        )
+
+    # ── ATR — volatilité ──────────────────────────────────────────
+    if hist is not None:
+        atr = _atr_pct(hist)
+        if atr is not None:
+            a_sig = "sell" if atr > 5 else "neutral"
+            out[f"atr_{prefix}"] = _ind(
+                _norm(atr, 1, 10), f"{atr} %", " du prix",
+                a_sig,
+                f"ATR {label} à {atr} % du prix — "
+                + ("volatilité très élevée, risque de grands mouvements." if atr > 5
+                   else "volatilité modérée pour un actif crypto."),
+            )
+
+    # ── Performance vs BTC (90j) ──────────────────────────────────
+    if btc_close is not None and len(btc_close) >= 10 and len(close) >= 10:
+        try:
+            n       = min(90, len(close), len(btc_close))
+            alt_ret = float(close.iloc[-1]) / float(close.iloc[-n]) - 1
+            btc_ret = float(btc_close.iloc[-1]) / float(btc_close.iloc[-n]) - 1
+            alpha   = round((alt_ret - btc_ret) * 100, 1)
+            r_sig   = "buy" if alpha > 10 else "sell" if alpha < -15 else "neutral"
+            out[f"vs_btc_{prefix}"] = _ind(
+                _norm(alpha, -40, 40),
+                f"{'+ ' if alpha >= 0 else ''}{alpha} %", " vs BTC (90j)",
+                r_sig,
+                f"{label} {'surperforme' if alpha >= 0 else 'sous-performe'} Bitcoin "
+                f"de {abs(alpha)} % sur 90 jours.",
+            )
+        except Exception as e:
+            print(f"[altcoin] vs_btc {prefix}: {e}")
+
+    return out
+
+
+
     out = {}
 
     # ── Fetch BTC price + historique (yfinance) ──────────────────
@@ -815,6 +1138,42 @@ def _crypto() -> dict:
             )
     except Exception as e:
         print(f"[crypto] Funding: {e}")
+
+    # ── BTC — Bollinger & ATR (complète l'analyse technique) ───────
+    if btc_close is not None and len(btc_close) >= 20:
+        boll_btc = _bollinger_pct(btc_close)
+        if boll_btc is not None:
+            b_sig = "sell" if boll_btc > 80 else "buy" if boll_btc < 20 else "neutral"
+            out["bollinger_btc"] = _ind(
+                boll_btc, f"{boll_btc} %", "",
+                b_sig,
+                f"Bollinger BTC à {boll_btc} % — "
+                + ("proche bande haute, risque de retournement." if boll_btc > 80
+                   else "proche bande basse, rebond possible." if boll_btc < 20
+                   else "zone centrale."),
+            )
+        if btc_hist is not None:
+            atr_btc = _atr_pct(btc_hist)
+            if atr_btc is not None:
+                out["atr_btc"] = _ind(
+                    _norm(atr_btc, 1, 6), f"{atr_btc} %", " du prix",
+                    "sell" if atr_btc > 4 else "neutral",
+                    f"ATR Bitcoin à {atr_btc} % du prix — "
+                    + ("volatilité élevée, grands mouvements probables." if atr_btc > 4
+                       else "volatilité modérée."),
+                )
+
+    # ── ETH, SOL, HYPE ───────────────────────────────────────────
+    altcoins = [
+        ("ETH-USD",  "ethereum",    "eth",  "Ethereum (ETH)"),
+        ("SOL-USD",  "solana",      "sol",  "Solana (SOL)"),
+        ("HYPE-USD", "hyperliquid", "hype", "Hyperliquid (HYPE)"),
+    ]
+    for ticker, cg_id, prefix, label in altcoins:
+        out.update(_altcoin_block(ticker, cg_id, prefix, label, btc_close))
+
+    # ── Indicateurs sociaux + halving ────────────────────────────
+    out.update(_social_indicators())
 
     return out
 
