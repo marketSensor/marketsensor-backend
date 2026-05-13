@@ -1582,7 +1582,7 @@ def _backtest() -> list[dict]:
 
     for ticker, name, buy_thr, sell_thr in assets:
         try:
-            close = yf.Ticker(ticker).history(period="max")["Close"]
+            close = yf.Ticker(ticker).history(period="5y")["Close"]
             if len(close) < 200:
                 continue
 
@@ -1636,28 +1636,28 @@ def _backtest() -> list[dict]:
 # ══════════════════════════════════════════════════════════════════
 
 def get_all() -> dict:
+    """Indicateurs principaux — rapides, cache 1h."""
+    return {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "bourse":    _bourse(),
+        "crypto":    _crypto(),
+        "matieres":  _matieres(),
+    }
+
+
+def get_analytics() -> dict:
+    """Analytics avancées — plus lentes, cache 4h."""
     import concurrent.futures as cf
-    with cf.ThreadPoolExecutor(max_workers=4) as ex:
-        f_b    = ex.submit(_bourse)
-        f_c    = ex.submit(_crypto)
-        f_m    = ex.submit(_matieres)
+    with cf.ThreadPoolExecutor(max_workers=3) as ex:
         f_corr = ex.submit(_correlations)
         f_div  = ex.submit(_divergences)
         f_back = ex.submit(_backtest)
-        bourse      = f_b.result()
-        crypto      = f_c.result()
-        matieres    = f_m.result()
-        correlations= f_corr.result()
-        divergences = f_div.result()
-        backtest    = f_back.result()
+        correlations = f_corr.result()
+        divergences  = f_div.result()
+        backtest     = f_back.result()
     return {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "bourse":    bourse,
-        "crypto":    crypto,
-        "matieres":  matieres,
-        "analytics": {
-            "correlations": correlations,
-            "divergences":  divergences,
-            "backtest":     backtest,
-        },
+        "timestamp":     datetime.utcnow().isoformat() + "Z",
+        "correlations":  correlations,
+        "divergences":   divergences,
+        "backtest":      backtest,
     }

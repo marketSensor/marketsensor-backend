@@ -27,10 +27,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("marketsense")
 
 # ── État global ───────────────────────────────────────────────────
-_cache: dict       = {"data": None, "ts": 0.0, "loading": False}
+_cache: dict           = {"data": None, "ts": 0.0, "loading": False}
+_analytics_cache: dict = {"data": None, "ts": 0.0, "loading": False}
 _prev_signals: dict = {}                       # derniers signaux connus
 _history: list      = []                       # [(ts, {bourse, crypto, matieres})]
-CACHE_TTL           = 3600                     # 1 heure
+CACHE_TTL          = 3600    # indicateurs : 1h
+ANALYTICS_TTL      = 14400   # analytics   : 4h
 HISTORY_MAX_ITEMS   = 90 * 24                  # ~90 jours à 1 rafraîch./heure
 
 
@@ -249,3 +251,38 @@ async def get_calendar(days: int = 60):
             upcoming.append({**ev, "days_from_now": delta})
     upcoming.sort(key=lambda x: x["date"])
     return {"events": upcoming, "count": len(upcoming)}
+
+@app.get("/api/analytics", tags=["analytics"])
+async def get_analytics_endpoint(force: bool = False):
+    """
+    Analytics avancées : corrélations, divergences, backtesting.
+    Cache 4h — calcul ~30-60s au premier appel.
+    """
+    global _analytics_cache
+    now = time.time()
+    stale = not _analytics_cache["data"] or (now - _analytics_cache["ts"]) > ANALYTICS_TTL
+
+    if force or stale:
+        if not _analytics_cache["loading"]:
+            _analytics_cache["loading"] = True
+            try:
+                data = await asyncio.to_thread(indicators.get_analytics)
+                _analytics_cache["data"] = data
+                _analytics_cache["ts"]   = time.time()
+                log.info(f"[analytics] Cache mis à jour — {len(data.get('backtest', []))} backtest(s)")
+            except Exception as e:
+                log.error(f"[analytics] Erreur : {e}")
+            finally:
+                _analytics_cache["loading"] = False
+        else:
+            # Déjà en cours de calcul — attendre max 90s
+            for _ in range(90):
+                await asyncio.sleep(1)
+                if not _analytics_cache["loading"]:
+                    break
+
+    if not _analytics_cache["data"]:
+        return JSONResponse({"error": "Analytics en cours de calcul, réessayez dans 30s."}, status_code=503)
+
+    return JSONResponse(_analytics_cache["data"])
+
