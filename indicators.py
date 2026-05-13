@@ -31,6 +31,10 @@ HEADERS = {
 }
 TIMEOUT = 12
 
+# Prix mis en cache lors du calcul des indicateurs principaux
+# Réutilisés par les analytics sans appel yfinance supplémentaire
+_PRICE_STORE: dict[str, "pd.Series"] = {}
+
 
 # ══════════════════════════════════════════════════════════════════
 # HELPERS — CALCULS TECHNIQUES
@@ -295,6 +299,7 @@ def _etf_block(ticker: str, prefix: str, label: str) -> dict:
             return out
 
         close = hist["Close"]
+        _PRICE_STORE[label] = close          # pour analytics
         price = float(close.iloc[-1])
         ma50  = float(close.rolling(50).mean().iloc[-1])
         ma200 = float(close.rolling(200).mean().iloc[-1])
@@ -838,6 +843,7 @@ def _altcoin_block(
         if not h.empty:
             hist  = h
             close = h["Close"]
+            _PRICE_STORE[label] = close   # pour analytics
     except Exception as e:
         print(f"[altcoin] yfinance {ticker_yf}: {e}")
 
@@ -1263,6 +1269,7 @@ def _commodity_block(ticker, prefix, label, price_unit="$", round_price=2):
         if hist.empty:
             return out
         close = hist["Close"]
+        _PRICE_STORE[label] = close          # pour analytics
         price = float(close.iloc[-1])
         p_str = price_unit + str(f"{round(price, round_price):,}")
 
@@ -1473,172 +1480,157 @@ def _rsi_series(series: pd.Series, period: int = 14) -> pd.Series:
 
 def _correlations() -> dict:
     """
-    Matrice de corrélation des rendements journaliers sur 1 an.
-    Appels séquentiels pour éviter le rate-limit Yahoo Finance.
+    Matrice de corrélation depuis _PRICE_STORE (données déjà téléchargées).
+    Aucun appel yfinance supplémentaire.
     """
-    assets = {
-        "S&P 500":     "^GSPC",
-        "Bitcoin":     "BTC-USD",
-        "Ethereum":    "ETH-USD",
-        "Or":          "GC=F",
-        "Argent":      "SI=F",
-        "Pétrole WTI": "CL=F",
-        "DXY":         "DX-Y.NYB",
-    }
+    # Sélection des actifs disponibles dans le store
+    wanted = ["S&P 500", "Bitcoin", "Ethereum", "Solana",
+              "Or (GC=F)", "Argent (SI=F)", "Pétrole WTI (CL=F)", "DXY"]
     prices: dict[str, pd.Series] = {}
-    for name, ticker in assets.items():
-        for attempt in range(2):   # 1 retry
-            try:
-                h = yf.Ticker(ticker).history(period="1y")["Close"]
-                if len(h) > 50:
-                    prices[name] = h
+    for key, series in _PRICE_STORE.items():
+        # Correspondance souple sur les noms
+        short = key.split("(")[0].strip()
+        for w in wanted:
+            ws = w.split("(")[0].strip()
+            if ws.lower() in short.lower() or short.lower() in ws.lower():
+                if len(series) > 50:
+                    prices[ws] = series
                 break
-            except Exception as e:
-                print(f"[corr] {ticker} attempt {attempt+1}: {e}")
-                import time as _time; _time.sleep(1)
 
     if len(prices) < 3:
-        print(f"[corr] Seulement {len(prices)} actifs récupérés, abandonne")
+        print(f"[corr] _PRICE_STORE a {len(_PRICE_STORE)} entrées, {len(prices)} utiles : {list(prices.keys())}")
         return {}
 
-    df      = pd.DataFrame(prices).pct_change().dropna()
-    corr    = df.corr()
-    cols    = list(corr.columns)
-    matrix  = [[round(float(corr.loc[r, c]), 3) for c in cols] for r in cols]
+    df   = pd.DataFrame(prices).pct_change().dropna()
+    corr = df.corr()
+    cols = list(corr.columns)
+    matrix = [[round(float(corr.loc[r, c]), 3) for c in cols] for r in cols]
+    print(f"[corr] Matrice {len(cols)}×{len(cols)} calculée depuis _PRICE_STORE")
     return {"assets": cols, "matrix": matrix}
 
 
 def _divergences() -> list[dict]:
     """
-    Détecte les divergences haussières et baissières prix/RSI
-    sur les 20 derniers jours (pente de régression linéaire).
+    Détecte les divergences RSI/Prix depuis _PRICE_STORE.
+    Aucun appel yfinance supplémentaire.
     """
-    assets = {
-        "^GSPC":    "S&P 500",
-        "BTC-USD":  "Bitcoin",
-        "ETH-USD":  "Ethereum",
-        "SOL-USD":  "Solana",
-        "GC=F":     "Or",
-        "CL=F":     "Pétrole WTI",
-        "HG=F":     "Cuivre",
-    }
     result = []
     WINDOW = 20
+    PRICE_THR = 0.05
+    RSI_THR   = 0.15
 
-    for ticker, name in assets.items():
+    for label, series in _PRICE_STORE.items():
+        if len(series) < WINDOW + 14:
+            continue
         try:
-            close = yf.Ticker(ticker).history(period="1y")["Close"]
-            if len(close) < WINDOW + 14:
-                continue
-
-            rsi_s   = _rsi_series(close)
-            p_rec   = close.tail(WINDOW).values
-            r_rec   = rsi_s.tail(WINDOW).dropna().values
+            rsi_s  = _rsi_series(series)
+            p_rec  = series.tail(WINDOW).values
+            r_rec  = rsi_s.tail(WINDOW).dropna().values
             if len(r_rec) < WINDOW:
                 continue
 
-            x            = np.arange(WINDOW, dtype=float)
-            p_slope      = np.polyfit(x, p_rec, 1)[0]
-            r_slope      = np.polyfit(x, r_rec, 1)[0]
-            p_slope_pct  = p_slope / abs(p_rec[0]) * 100  # en % par jour
+            x           = np.arange(WINDOW, dtype=float)
+            p_slope     = np.polyfit(x, p_rec, 1)[0]
+            r_slope     = np.polyfit(x, r_rec, 1)[0]
+            p_slope_pct = p_slope / abs(p_rec[0]) * 100
 
-            # Seuils : divergence significative uniquement
-            PRICE_THR = 0.05   # >0.05% par jour
-            RSI_THR   = 0.15   # >0.15 pt RSI par jour
-
+            name = label.split("(")[0].strip()
             if p_slope_pct < -PRICE_THR and r_slope > RSI_THR:
                 result.append({
-                    "asset": name, "type": "bullish",
-                    "sig": "buy",
+                    "asset": name, "type": "bullish", "sig": "buy",
                     "desc": (f"{name} : divergence haussière — prix en baisse "
                              f"({p_slope_pct:+.2f}%/j) mais RSI en hausse "
-                             f"({r_slope:+.2f}pt/j). Signal fort d'inversion potentielle."),
+                             f"({r_slope:+.2f}pt/j). Signal d'inversion potentielle."),
                 })
             elif p_slope_pct > PRICE_THR and r_slope < -RSI_THR:
                 result.append({
-                    "asset": name, "type": "bearish",
-                    "sig": "sell",
+                    "asset": name, "type": "bearish", "sig": "sell",
                     "desc": (f"{name} : divergence baissière — prix en hausse "
                              f"({p_slope_pct:+.2f}%/j) mais RSI en baisse "
-                             f"({r_slope:+.2f}pt/j). Risque de retournement à court terme."),
+                             f"({r_slope:+.2f}pt/j). Risque de retournement."),
                 })
         except Exception as e:
-            print(f"[div] {ticker}: {e}")
+            print(f"[div] {label}: {e}")
 
+    print(f"[div] {len(result)} divergence(s) sur {len(_PRICE_STORE)} actifs")
     return result
 
 
 def _backtest() -> list[dict]:
     """
-    Backtesting historique : performance 90j après chaque signal RSI.
-    Utilise 5 ans d'historique, appels séquentiels avec retry.
+    Backtesting RSI depuis _PRICE_STORE (données déjà téléchargées).
+    Aucun appel yfinance supplémentaire.
     """
-    assets = [
-        ("BTC-USD", "Bitcoin",  35, 70),
-        ("^GSPC",   "S&P 500",  35, 70),
-        ("GC=F",    "Or",       35, 70),
-        ("ETH-USD", "Ethereum", 35, 70),
-    ]
-    FWD     = 90
-    results = []
+    FWD      = 90
+    BUY_THR  = 35
+    SELL_THR = 70
+    results  = []
 
-    for ticker, name, buy_thr, sell_thr in assets:
-        close = None
-        for attempt in range(2):
-            try:
-                close = yf.Ticker(ticker).history(period="5y")["Close"]
-                if len(close) >= 200:
-                    break
-            except Exception as e:
-                print(f"[backtest] {ticker} attempt {attempt+1}: {e}")
-                import time as _time; _time.sleep(1.5)
-                close = None
+    # Actifs prioritaires pour le backtesting
+    priority = ["Bitcoin", "S&P 500", "Or", "Ethereum",
+                "Pétrole WTI", "Solana", "Argent"]
 
-        if close is None or len(close) < 200:
-            print(f"[backtest] {ticker} : données insuffisantes ({len(close) if close is not None else 0} pts)")
+    # Trier _PRICE_STORE pour mettre les prioritaires en premier
+    def sort_key(lbl):
+        short = lbl.split("(")[0].strip()
+        for i, p in enumerate(priority):
+            if p.lower() in short.lower():
+                return i
+        return 99
+
+    items = sorted(_PRICE_STORE.items(), key=lambda x: sort_key(x[0]))
+
+    processed = set()
+    for label, close in items:
+        name = label.split("(")[0].strip()
+        if name in processed:
             continue
+        if len(close) < FWD + 30:
+            continue
+        processed.add(name)
 
-        rsi_s = _rsi_series(close)
+        try:
+            rsi_s = _rsi_series(close)
 
-        for label, direction, threshold in [
-            (f"RSI < {buy_thr}",  "buy",  buy_thr),
-            (f"RSI > {sell_thr}", "sell", sell_thr),
-        ]:
-            crossings = []
-            for i in range(1, len(rsi_s) - FWD):
-                v_prev = rsi_s.iloc[i-1]
-                v_curr = rsi_s.iloc[i]
-                if np.isnan(v_prev) or np.isnan(v_curr):
+            for direction, threshold in [("buy", BUY_THR), ("sell", SELL_THR)]:
+                crossings = []
+                for i in range(1, len(rsi_s) - FWD):
+                    vp, vc = rsi_s.iloc[i-1], rsi_s.iloc[i]
+                    if np.isnan(vp) or np.isnan(vc):
+                        continue
+                    if direction == "buy"  and vp >= threshold and vc < threshold:
+                        crossings.append(i)
+                    if direction == "sell" and vp <= threshold and vc > threshold:
+                        crossings.append(i)
+
+                if not crossings:
                     continue
-                if direction == "buy"  and v_prev >= buy_thr  and v_curr < buy_thr:
-                    crossings.append(i)
-                if direction == "sell" and v_prev <= sell_thr and v_curr > sell_thr:
-                    crossings.append(i)
 
-            if not crossings:
-                continue
+                rets = []
+                for idx in crossings:
+                    if idx + FWD < len(close):
+                        r = (float(close.iloc[idx+FWD]) / float(close.iloc[idx]) - 1) * 100
+                        rets.append(round(r, 1))
 
-            rets = []
-            for idx in crossings:
-                if idx + FWD < len(close):
-                    r = (float(close.iloc[idx + FWD]) / float(close.iloc[idx]) - 1) * 100
-                    rets.append(round(r, 1))
+                if not rets:
+                    continue
 
-            if not rets:
-                continue
+                avg      = round(sum(rets) / len(rets), 1)
+                win_rate = round(sum(1 for r in rets if (r>0)==(direction=="buy")) / len(rets) * 100)
+                sig_label = f"RSI < {threshold} (survente)" if direction=="buy" else f"RSI > {threshold} (surachat)"
+                results.append({
+                    "asset":       name,
+                    "signal":      sig_label,
+                    "direction":   direction,
+                    "occurrences": len(rets),
+                    "avg_90d":     avg,
+                    "win_rate":    win_rate,
+                    "last_5":      rets[-5:],
+                })
+        except Exception as e:
+            print(f"[backtest] {label}: {e}")
 
-            avg      = round(sum(rets) / len(rets), 1)
-            win_rate = round(sum(1 for r in rets if (r > 0) == (direction=="buy")) / len(rets) * 100)
-            results.append({
-                "asset":       name,
-                "signal":      f"{label} (survente)" if direction=="buy" else f"{label} (surachat)",
-                "direction":   direction,
-                "occurrences": len(rets),
-                "avg_90d":     avg,
-                "win_rate":    win_rate,
-                "last_5":      rets[-5:],
-            })
-
+    print(f"[backtest] {len(results)} résultats sur {len(processed)} actifs")
     return results
 
 
@@ -1655,12 +1647,16 @@ def get_all() -> dict:
 
 
 def get_analytics() -> dict:
-    """Analytics avancées — séquentielles pour éviter le rate-limit Yahoo Finance."""
-    import time as _time
+    """
+    Analytics depuis _PRICE_STORE — aucun appel yfinance supplémentaire.
+    Le store est rempli par get_all() au premier démarrage.
+    """
+    if len(_PRICE_STORE) < 3:
+        print(f"[analytics] _PRICE_STORE vide ({len(_PRICE_STORE)} entrées) — lancement get_all()")
+        get_all()   # Remplit le store
+
     correlations = _correlations()
-    _time.sleep(2)           # pause entre les appels yfinance
     divergences  = _divergences()
-    _time.sleep(2)
     backtest     = _backtest()
     return {
         "timestamp":    datetime.utcnow().isoformat() + "Z",
