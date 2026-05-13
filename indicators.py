@@ -588,6 +588,9 @@ def _etf_block(ticker: str, prefix: str, label: str) -> dict:
                    else "inflation très basse, impact réduit sur les matières premières." if yoy < 1
                    else "inflation modérée."),
             )
+    except Exception as e:
+        print(f"[bourse] CPI: {e}")
+
     # ── ETFs mondiaux (Amundi, Euronext Paris) ────────────────────
     for ticker, prefix, label in [
         ("CW8.PA",   "cw8",   "MSCI World (CW8)"),
