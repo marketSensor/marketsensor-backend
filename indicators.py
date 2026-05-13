@@ -1474,28 +1474,31 @@ def _rsi_series(series: pd.Series, period: int = 14) -> pd.Series:
 def _correlations() -> dict:
     """
     Matrice de corrélation des rendements journaliers sur 1 an.
-    Retourne les noms des actifs et la matrice (liste de listes).
+    Appels séquentiels pour éviter le rate-limit Yahoo Finance.
     """
     assets = {
-        "S&P 500":    "^GSPC",
-        "Bitcoin":    "BTC-USD",
-        "Ethereum":   "ETH-USD",
-        "Solana":     "SOL-USD",
-        "Or":         "GC=F",
-        "Argent":     "SI=F",
-        "Pétrole WTI":"CL=F",
-        "DXY":        "DX-Y.NYB",
+        "S&P 500":     "^GSPC",
+        "Bitcoin":     "BTC-USD",
+        "Ethereum":    "ETH-USD",
+        "Or":          "GC=F",
+        "Argent":      "SI=F",
+        "Pétrole WTI": "CL=F",
+        "DXY":         "DX-Y.NYB",
     }
     prices: dict[str, pd.Series] = {}
     for name, ticker in assets.items():
-        try:
-            h = yf.Ticker(ticker).history(period="1y")["Close"]
-            if len(h) > 50:
-                prices[name] = h
-        except Exception as e:
-            print(f"[corr] {ticker}: {e}")
+        for attempt in range(2):   # 1 retry
+            try:
+                h = yf.Ticker(ticker).history(period="1y")["Close"]
+                if len(h) > 50:
+                    prices[name] = h
+                break
+            except Exception as e:
+                print(f"[corr] {ticker} attempt {attempt+1}: {e}")
+                import time as _time; _time.sleep(1)
 
-    if len(prices) < 2:
+    if len(prices) < 3:
+        print(f"[corr] Seulement {len(prices)} actifs récupérés, abandonne")
         return {}
 
     df      = pd.DataFrame(prices).pct_change().dropna()
@@ -1568,67 +1571,73 @@ def _divergences() -> list[dict]:
 def _backtest() -> list[dict]:
     """
     Backtesting historique : performance 90j après chaque signal RSI.
-    Utilise l'historique complet disponible sur yfinance.
+    Utilise 5 ans d'historique, appels séquentiels avec retry.
     """
     assets = [
         ("BTC-USD", "Bitcoin",  35, 70),
-        ("ETH-USD", "Ethereum", 35, 70),
         ("^GSPC",   "S&P 500",  35, 70),
         ("GC=F",    "Or",       35, 70),
-        ("SOL-USD", "Solana",   35, 70),
+        ("ETH-USD", "Ethereum", 35, 70),
     ]
-    FWD   = 90    # jours de rendement forward
+    FWD     = 90
     results = []
 
     for ticker, name, buy_thr, sell_thr in assets:
-        try:
-            close = yf.Ticker(ticker).history(period="5y")["Close"]
-            if len(close) < 200:
+        close = None
+        for attempt in range(2):
+            try:
+                close = yf.Ticker(ticker).history(period="5y")["Close"]
+                if len(close) >= 200:
+                    break
+            except Exception as e:
+                print(f"[backtest] {ticker} attempt {attempt+1}: {e}")
+                import time as _time; _time.sleep(1.5)
+                close = None
+
+        if close is None or len(close) < 200:
+            print(f"[backtest] {ticker} : données insuffisantes ({len(close) if close is not None else 0} pts)")
+            continue
+
+        rsi_s = _rsi_series(close)
+
+        for label, direction, threshold in [
+            (f"RSI < {buy_thr}",  "buy",  buy_thr),
+            (f"RSI > {sell_thr}", "sell", sell_thr),
+        ]:
+            crossings = []
+            for i in range(1, len(rsi_s) - FWD):
+                v_prev = rsi_s.iloc[i-1]
+                v_curr = rsi_s.iloc[i]
+                if np.isnan(v_prev) or np.isnan(v_curr):
+                    continue
+                if direction == "buy"  and v_prev >= buy_thr  and v_curr < buy_thr:
+                    crossings.append(i)
+                if direction == "sell" and v_prev <= sell_thr and v_curr > sell_thr:
+                    crossings.append(i)
+
+            if not crossings:
                 continue
 
-            rsi_s = _rsi_series(close)
+            rets = []
+            for idx in crossings:
+                if idx + FWD < len(close):
+                    r = (float(close.iloc[idx + FWD]) / float(close.iloc[idx]) - 1) * 100
+                    rets.append(round(r, 1))
 
-            for label, lo, hi, direction in [
-                (f"RSI < {buy_thr} (survente)",   None, buy_thr,  "buy"),
-                (f"RSI > {sell_thr} (surachat)",  sell_thr, None,  "sell"),
-            ]:
-                # Détecter les croisements de seuil
-                crossings = []
-                for i in range(1, len(rsi_s) - FWD):
-                    v_prev = rsi_s.iloc[i - 1]
-                    v_curr = rsi_s.iloc[i]
-                    if np.isnan(v_prev) or np.isnan(v_curr):
-                        continue
-                    if direction == "buy"  and v_prev >= buy_thr  and v_curr < buy_thr:
-                        crossings.append(i)
-                    if direction == "sell" and v_prev <= sell_thr and v_curr > sell_thr:
-                        crossings.append(i)
+            if not rets:
+                continue
 
-                if not crossings:
-                    continue
-
-                rets = []
-                for idx in crossings:
-                    if idx + FWD < len(close):
-                        r = (float(close.iloc[idx + FWD]) / float(close.iloc[idx]) - 1) * 100
-                        rets.append(round(r, 1))
-
-                if not rets:
-                    continue
-
-                avg      = round(sum(rets) / len(rets), 1)
-                win_rate = round(sum(1 for r in rets if (r > 0) == (direction == "buy")) / len(rets) * 100)
-                results.append({
-                    "asset":        name,
-                    "signal":       label,
-                    "direction":    direction,
-                    "occurrences":  len(rets),
-                    "avg_90d":      avg,
-                    "win_rate":     win_rate,
-                    "last_5":       rets[-5:],
-                })
-        except Exception as e:
-            print(f"[backtest] {ticker}: {e}")
+            avg      = round(sum(rets) / len(rets), 1)
+            win_rate = round(sum(1 for r in rets if (r > 0) == (direction=="buy")) / len(rets) * 100)
+            results.append({
+                "asset":       name,
+                "signal":      f"{label} (survente)" if direction=="buy" else f"{label} (surachat)",
+                "direction":   direction,
+                "occurrences": len(rets),
+                "avg_90d":     avg,
+                "win_rate":    win_rate,
+                "last_5":      rets[-5:],
+            })
 
     return results
 
@@ -1646,18 +1655,16 @@ def get_all() -> dict:
 
 
 def get_analytics() -> dict:
-    """Analytics avancées — plus lentes, cache 4h."""
-    import concurrent.futures as cf
-    with cf.ThreadPoolExecutor(max_workers=3) as ex:
-        f_corr = ex.submit(_correlations)
-        f_div  = ex.submit(_divergences)
-        f_back = ex.submit(_backtest)
-        correlations = f_corr.result()
-        divergences  = f_div.result()
-        backtest     = f_back.result()
+    """Analytics avancées — séquentielles pour éviter le rate-limit Yahoo Finance."""
+    import time as _time
+    correlations = _correlations()
+    _time.sleep(2)           # pause entre les appels yfinance
+    divergences  = _divergences()
+    _time.sleep(2)
+    backtest     = _backtest()
     return {
-        "timestamp":     datetime.utcnow().isoformat() + "Z",
-        "correlations":  correlations,
-        "divergences":   divergences,
-        "backtest":      backtest,
+        "timestamp":    datetime.utcnow().isoformat() + "Z",
+        "correlations": correlations,
+        "divergences":  divergences,
+        "backtest":     backtest,
     }
