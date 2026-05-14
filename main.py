@@ -252,54 +252,54 @@ async def get_calendar(days: int = 60):
     upcoming.sort(key=lambda x: x["date"])
     return {"events": upcoming, "count": len(upcoming)}
 
-@app.get("/api/analytics", tags=["analytics"])
-async def get_analytics_endpoint():
-    """
-    Non-bloquant : retourne 202 si les données ne sont pas encore prêtes,
-    200 + JSON dès que _PRICE_STORE est rempli.
-    """
+async def _compute_analytics_bg():
+    """Calcule les analytics en tâche de fond (non-bloquant)."""
     global _analytics_cache
-
-    store_size = len(indicators._PRICE_STORE)
-
-    # Pas encore de données → retour immédiat avec statut
-    if store_size < 5:
-        return JSONResponse({
-            "status":     "computing",
-            "store_size": store_size,
-            "message":    f"Données en cours de téléchargement ({store_size} actifs prêts)…",
-        }, status_code=202)
-
-    # Cache encore valide → retourner directement
-    now   = time.time()
-    stale = (not _analytics_cache["data"] or
-             (now - _analytics_cache["ts"]) > ANALYTICS_TTL)
-
-    if not stale:
-        return JSONResponse(_analytics_cache["data"])
-
-    # Calcul en cours dans un autre thread → attendre max 30s
-    if _analytics_cache["loading"]:
-        for _ in range(30):
-            await asyncio.sleep(1)
-            if not _analytics_cache["loading"]:
-                break
-        if _analytics_cache["data"]:
-            return JSONResponse(_analytics_cache["data"])
-
-    # Lancer le calcul (rapide car depuis _PRICE_STORE)
-    _analytics_cache["loading"] = True
     try:
+        log.info("[analytics] Calcul en background démarré…")
+        # Si _PRICE_STORE vide, lancer get_all() pour le remplir
+        if len(indicators._PRICE_STORE) < 3:
+            log.info("[analytics] _PRICE_STORE vide — lancement get_all() d'abord")
+            await asyncio.to_thread(indicators.get_all)
+            log.info(f"[analytics] get_all() terminé — {len(indicators._PRICE_STORE)} actifs dans _PRICE_STORE")
         data = await asyncio.to_thread(indicators.get_analytics)
         _analytics_cache["data"] = data
         _analytics_cache["ts"]   = time.time()
-        log.info(f"[analytics] OK — store:{store_size} "
+        log.info(f"[analytics] Calcul terminé — "
                  f"corr:{len(data.get('correlations',{}).get('assets',[]))} "
+                 f"div:{len(data.get('divergences',[]))} "
                  f"back:{len(data.get('backtest',[]))}")
-        return JSONResponse(data)
     except Exception as e:
-        log.error(f"[analytics] Erreur : {e}")
-        return JSONResponse({"error": str(e)}, status_code=500)
+        log.error(f"[analytics] Erreur calcul : {e}")
     finally:
         _analytics_cache["loading"] = False
+
+
+@app.get("/api/analytics", tags=["analytics"])
+async def get_analytics_endpoint():
+    """
+    Endpoint non-bloquant avec tâche de fond.
+    - 200 : données prêtes
+    - 202 : calcul en cours (relancer dans 15s)
+    """
+    global _analytics_cache
+    now = time.time()
+
+    # Cache valide → retour immédiat
+    if (_analytics_cache["data"] and
+            (now - _analytics_cache["ts"]) < ANALYTICS_TTL):
+        return JSONResponse(_analytics_cache["data"])
+
+    # Lancer le calcul en background si pas déjà en cours
+    if not _analytics_cache["loading"]:
+        _analytics_cache["loading"] = True
+        asyncio.create_task(_compute_analytics_bg())
+        log.info("[analytics] Tâche de fond démarrée")
+
+    # Retourner le statut actuel
+    return JSONResponse({
+        "status":     "computing",
+        "store_size": len(indicators._PRICE_STORE),
+        "loading":    _analytics_cache["loading"],
+    }, status_code=202)
 
