@@ -178,6 +178,33 @@ def _fred(series_id: str, limit: int = 1) -> list[float] | None:
         return None
 
 
+def _fred_yoy(series_id: str) -> float | None:
+    """Variation sur 12 mois : dernier mois valide vs même mois un an avant (tolère les mois manquants chez FRED)."""
+    if not FRED_KEY:
+        return None
+    url = (
+        f"https://api.stlouisfed.org/fred/series/observations"
+        f"?series_id={series_id}&api_key={FRED_KEY}"
+        f"&file_type=json&sort_order=desc&limit=36"
+    )
+    try:
+        r   = requests.get(url, timeout=TIMEOUT, headers=HEADERS)
+        obs = [(dt.date.fromisoformat(o["date"]), float(o["value"]))
+               for o in r.json().get("observations", []) if o["value"] != "."]
+        if not obs:
+            return None
+        last_d, last_v = obs[0]
+        # observation la plus proche d'un an avant la dernière, à ±45 jours
+        target = last_d.replace(year=last_d.year - 1)
+        prev_d, prev_v = min(obs[1:], key=lambda o: abs((o[0] - target).days), default=(None, None))
+        if prev_d is None or abs((prev_d - target).days) > 45:
+            return None
+        return round((last_v / prev_v - 1) * 100, 1)
+    except Exception as e:
+        print(f"[FRED] {series_id} variation annuelle: {e}")
+        return None
+
+
 def _scrape_cape() -> float | None:
     try:
         r    = requests.get("https://www.multpl.com/shiller-pe",
@@ -599,9 +626,8 @@ def _bourse() -> dict:
 
     # ── CPI YoY (FRED) ───────────────────────────────────────────
     try:
-        cpi_obs = _fred("CPIAUCSL", limit=13)
-        if cpi_obs and len(cpi_obs) >= 13:
-            yoy = round((cpi_obs[0] / cpi_obs[12] - 1) * 100, 1)
+        yoy = _fred_yoy("CPIAUCSL")
+        if yoy is not None:
             c_sig = "buy" if yoy > 2 else "neutral" if yoy > 0.5 else "sell"
             out["cpi"] = _ind(
                 _norm(yoy, 0, 8), f"{yoy} %", "",
@@ -1325,9 +1351,8 @@ def _matieres():
         print(f"[matieres] TIPS: {e}")
 
     try:
-        cpi_obs = _fred("CPIAUCSL", limit=13)
-        if cpi_obs and len(cpi_obs) >= 13:
-            yoy = round((cpi_obs[0] / cpi_obs[12] - 1) * 100, 1)
+        yoy = _fred_yoy("CPIAUCSL")
+        if yoy is not None:
             if yoy > 2:  c_desc = "soutient les actifs tangibles et matières premières."
             elif yoy < 1: c_desc = "inflation très basse, moins de soutien aux matières premières."
             else:         c_desc = "inflation modérée."
