@@ -157,8 +157,8 @@ def main() -> int:
     try:
         old = read_json(out / "backtest.json", {})
         age = (now_dt - datetime.fromisoformat(old["generated"].replace("Z", "+00:00"))).days if old.get("generated") else 999
-        if age >= BACKTEST_EVERY_DAYS:
-            import backtest
+        import backtest
+        if age >= BACKTEST_EVERY_DAYS or old.get("version") != backtest.VERSION:
             write_json(out / "backtest.json", backtest.run())
     except Exception as e:
         print(f"::warning::backtest non mis à jour : {type(e).__name__}: {e}")

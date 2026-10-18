@@ -23,6 +23,7 @@ import requests
 import yfinance as yf
 
 FRED_KEY = os.getenv("FRED_API_KEY", "")
+VERSION = 2               # à incrémenter quand les règles de signaux changent (force le recalcul)
 HORIZONS = (63, 252)
 MIN_STATE_DAYS = 250        # en dessous, l'état n'est pas jugé
 
@@ -166,6 +167,7 @@ def run() -> dict:
     base = {str(h): round(float(fwd[h].dropna().mean() * 100), 2) for h in HORIZONS}
     print(f"[backtest] {len(out_ind)} indicateurs testés en {time.time() - t0:.0f}s")
     return {
+        "version": VERSION,
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "target": "S&P 500 (^GSPC), rendement hors dividendes",
         "horizons": {"63": "3 mois", "252": "12 mois"},
