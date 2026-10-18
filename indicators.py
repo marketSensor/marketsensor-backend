@@ -649,6 +649,13 @@ def _bourse() -> dict:
     ]:
         out.update(_etf_block(ticker, prefix, label))
 
+    # ── Indicateurs complémentaires (macro, crédit, sentiment, largeur) ──
+    try:
+        import extras
+        out.update(extras.bourse_extras())
+    except Exception as e:
+        print(f"[bourse] extras: {e}")
+
     return out
 
 
@@ -1231,6 +1238,12 @@ def _crypto() -> dict:
     # ── Indicateurs sociaux + halving ────────────────────────────
     out.update(_social_indicators())
 
+    try:
+        import extras
+        out.update(extras.crypto_extras())
+    except Exception as e:
+        print(f"[crypto] extras: {e}")
+
     return out
 
 
@@ -1437,6 +1450,12 @@ def _matieres():
     # ── Métaux Industriels ────────────────────────────────────────
     out.update(_commodity_block("HG=F",  "copper", "Cuivre (HG=F)",     "$/lb", 2))
     out.update(_commodity_block("ALI=F", "alum",   "Aluminium (ALI=F)", "$/lb", 4))
+
+    try:
+        import extras
+        out.update(extras.matieres_extras())
+    except Exception as e:
+        print(f"[matieres] extras: {e}")
 
     return out
 
