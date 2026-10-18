@@ -128,6 +128,16 @@ def _bitbo_samples() -> list[dict]:
     return out
 
 
+def _candidates():
+    try:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import probe_candidates
+        res = probe_candidates.probe_all()
+        return json.loads(redact(json.dumps(res, ensure_ascii=False, default=str)))
+    except Exception as e:
+        return [{"error": redact(f"{type(e).__name__}: {e}")[:200]}]
+
+
 def _version(pkg: str):
     try:
         return metadata.version(pkg)
@@ -157,6 +167,7 @@ def finish(out_dir) -> None:
             "secrets_present": {n: bool(os.environ.get(n)) for n in SECRET_ENV},
             "probes": probes,
             "bitbo": _bitbo_samples(),
+            "candidates": _candidates(),
             "log_lines_total": len(_lines),
             "log": kept[:MAX_LINES],
         }
