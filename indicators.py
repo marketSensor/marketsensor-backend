@@ -217,6 +217,7 @@ def _shiller_cape() -> float | None:
             for ci, cell in enumerate(raw.iloc[ri]):
                 if isinstance(cell, str) and cell.strip().upper() == "CAPE":
                     col = pd.to_numeric(raw.iloc[ri + 1:, ci], errors="coerce").dropna()
+                    col = col[col > 5]          # ignore les lignes vides codées 0 en fin de feuille
                     if len(col):
                         print(f"[shiller] CAPE lu : {float(col.iloc[-1]):.1f}")
                         return round(float(col.iloc[-1]), 1)
