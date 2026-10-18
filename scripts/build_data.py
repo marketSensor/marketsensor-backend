@@ -18,7 +18,10 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))  # indicators.py / alerts.py à la racine du dépôt
 sys.path.insert(0, str(HERE))
 
+import diagnostics  # noqa: E402
 import signal_engine as eng  # noqa: E402
+
+_OUT = Path("out")
 
 MAX_CARRY_S = 24 * 3600   # un indicateur en échec garde sa dernière valeur jusqu'à 24 h
 MIN_FRESH = 10            # sous ce nombre d'indicateurs frais, on ne publie rien
@@ -99,6 +102,8 @@ def main() -> int:
     ap.add_argument("--alert-file", default=None)
     args = ap.parse_args()
     out = Path(args.out)
+    global _OUT
+    _OUT = out
     out.mkdir(parents=True, exist_ok=True)
 
     now_dt = datetime.now(timezone.utc)
@@ -165,4 +170,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    diagnostics.start()
+    try:
+        rc = main()
+    finally:
+        diagnostics.finish(_OUT)
+    sys.exit(rc)
