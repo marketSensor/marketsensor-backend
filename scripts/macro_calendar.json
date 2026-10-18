@@ -1,0 +1,236 @@
+[
+ {
+  "date": "2026-05-13",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-06-01",
+  "event": "Réunion OPEC+",
+  "impact": "high",
+  "category": "matieres"
+ },
+ {
+  "date": "2026-06-03",
+  "event": "World Gold Council — rapport T1",
+  "impact": "medium",
+  "category": "matieres"
+ },
+ {
+  "date": "2026-06-04",
+  "event": "Réunion BCE",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-06-05",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-06-10",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-06-16",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-07-02",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-07-15",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-07-23",
+  "event": "Réunion BCE",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-07-28",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-08-07",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-08-12",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-08-21",
+  "event": "Symposium Jackson Hole (Fed)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-09-01",
+  "event": "World Gold Council — rapport T2",
+  "impact": "medium",
+  "category": "matieres"
+ },
+ {
+  "date": "2026-09-04",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-09-07",
+  "event": "World Nuclear Association Symposium",
+  "impact": "medium",
+  "category": "matieres"
+ },
+ {
+  "date": "2026-09-09",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-09-10",
+  "event": "Réunion BCE",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-09-15",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-09-15",
+  "event": "Ethereum — mise à jour réseau",
+  "impact": "medium",
+  "category": "crypto"
+ },
+ {
+  "date": "2026-10-02",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-10-14",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-10-22",
+  "event": "Réunion BCE",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-10-27",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-11-02",
+  "event": "Réunion OPEC+",
+  "impact": "high",
+  "category": "matieres"
+ },
+ {
+  "date": "2026-11-06",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-11-12",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-12-04",
+  "event": "NFP — Emploi USA",
+  "impact": "medium",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-12-10",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-12-10",
+  "event": "Réunion BCE",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2026-12-15",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2027-01-13",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2027-01-26",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2027-02-10",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2027-03-10",
+  "event": "CPI USA (inflation)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2027-03-16",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2027-05-04",
+  "event": "Réunion Fed (FOMC)",
+  "impact": "high",
+  "category": "bourse"
+ },
+ {
+  "date": "2028-04-17",
+  "event": "Halving Bitcoin #5 (estimé)",
+  "impact": "high",
+  "category": "crypto"
+ }
+]
