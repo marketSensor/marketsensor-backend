@@ -647,6 +647,10 @@ def _bitbo(endpoint: str) -> float | None:
         if r.status_code == 429:
             print(f"[Bitbo] rate-limit sur {endpoint}")
             return None
+        if r.status_code != 200:   # 401 = clé requise (BITBO_API_KEY), 404 = nom d'endpoint inconnu
+            print(f"[Bitbo] {endpoint}: HTTP {r.status_code} {r.text[:80]!r}"
+                  + ("" if BITBO_KEY else " — aucune clé BITBO_API_KEY définie"))
+            return None
         data = r.json()
         rows = data.get("data", [])
         if rows:
@@ -1000,7 +1004,7 @@ def _crypto() -> dict:
     import concurrent.futures
     bitbo_endpoints = {
         "nupl":   "nupl-ratio",
-        "mvrv":   "mvrv-zscore",
+        "mvrv":   "mvrv-z-score",
         "puell":  "puell-multiple",
         "sopr":   "sopr",
         "cdd":    "cdd",

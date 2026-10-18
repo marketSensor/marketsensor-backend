@@ -39,6 +39,7 @@ jobs:
       - name: Calculer indicateurs, signaux, analytics
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          BITBO_API_KEY: ${{ secrets.BITBO_API_KEY }}
         run: python scripts/build_data.py --out out --alert-file "$RUNNER_TEMP/alert.json"
 
       - name: Publier sur la branche data
