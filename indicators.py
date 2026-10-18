@@ -1009,7 +1009,7 @@ def _crypto() -> dict:
         "sopr":   "sopr",
         "cdd":    "cdd",
         "nvt":    "nvt",
-        "mayer":  "mayermultiple",
+        "mayer":  "mayer-multiple",
         "rsim":   "monthly-rsi",
     }
     bitbo_vals: dict[str, float | None] = {}
