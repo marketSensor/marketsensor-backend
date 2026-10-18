@@ -364,6 +364,10 @@ def _etf_block(ticker: str, prefix: str, label: str) -> dict:
     except Exception as e:
         print(f"[etf] {ticker}: {e}")
     return out
+
+
+def _bourse() -> dict:
+    """Indicateurs bourse backend (S&P 500, VIX, CAPE, ETF…)."""
     out = {}
 
     # ── S&P 500 — données de base ────────────────────────────────
@@ -963,6 +967,8 @@ def _altcoin_block(
 
 
 
+def _crypto() -> dict:
+    """Indicateurs crypto backend (Bitbo, social, halving, altcoins…)."""
     out = {}
 
     # ── Fetch BTC price + historique (yfinance) ──────────────────
@@ -1107,7 +1113,7 @@ def _altcoin_block(
 
     # ── RSI Mensuel (Bitbo ou calcul yfinance monthly) ───────────
     rsim = bitbo_vals.get("rsim")
-    if rsim is None and btc_close is not None:
+    if rsim is None and btc_close is not None and isinstance(btc_close.index, pd.DatetimeIndex) and len(btc_close) > 30:
         # Calcul maison sur les clôtures mensuelles
         monthly = btc_close.resample("ME").last()
         rsim    = _rsi(monthly, 14)
@@ -1187,79 +1193,6 @@ def _altcoin_block(
 # ══════════════════════════════════════════════════════════════════
 # MATIÈRES PREMIÈRES
 # ══════════════════════════════════════════════════════════════════
-
-def _commodity_block(
-    ticker: str,
-    prefix: str,
-    label: str,
-    price_unit: str = "$",
-    round_price: int = 2,
-) -> dict:
-    """RSI, MACD, MM50, MM200 et perf 1 an pour un future ou ETF commodity."""
-    out = {}
-    try:
-        hist  = yf.Ticker(ticker).history(period="2y")
-        if hist.empty:
-            return out
-        close = hist["Close"]
-        price = float(close.iloc[-1])
-        p_str = f"{price_unit}{round(price, round_price):,}"
-
-        rsi_v = _rsi(close)
-        if rsi_v is not None:
-            out[f"rsi_{prefix}"] = _ind(
-                rsi_v, f"{rsi_v}  ({p_str})", "", _rsi_sig(rsi_v),
-                f"RSI {label} à {rsi_v} (cours : {p_str}) — "
-                + ("suracheté, risque de correction." if rsi_v > 70
-                   else "survendu — opportunité d'achat potentielle." if rsi_v < 30
-                   else "zone neutre, momentum équilibré."),
-            )
-
-        if len(close) >= 26:
-            mv, sv = _macd(close)
-            bull   = mv > sv
-            out[f"macd_{prefix}"] = _ind(
-                72 if bull else 28, "Positif" if bull else "Négatif", "",
-                "buy" if bull else "sell",
-                f"MACD {label} {'positif — tendance haussière confirmée.' if bull else 'négatif — tendance baissière en cours.'}",
-            )
-
-        if len(close) >= 50:
-            ma50    = float(close.rolling(50).mean().iloc[-1])
-            above50 = price > ma50
-            pct50   = round((price / ma50 - 1) * 100, 1)
-            out[f"mm50_{prefix}"] = _ind(
-                78 if above50 else 25,
-                f"{'+' if pct50 >= 0 else ''}{pct50} %", "",
-                "buy" if above50 else "sell",
-                f"{label} {'au-dessus' if above50 else 'en dessous'} de sa MM50 ({pct50:+.1f} %) — tendance court terme {'haussière.' if above50 else 'baissière.'}",
-            )
-
-        if len(close) >= 200:
-            ma200    = float(close.rolling(200).mean().iloc[-1])
-            above200 = price > ma200
-            pct200   = round((price / ma200 - 1) * 100, 1)
-            out[f"mm200_{prefix}"] = _ind(
-                83 if above200 else 20,
-                f"{'+' if pct200 >= 0 else ''}{pct200} %", "",
-                "buy" if above200 else "sell",
-                f"{label} {'au-dessus' if above200 else 'en dessous'} de sa MM200 ({pct200:+.1f} %) — tendance long terme {'haussière.' if above200 else 'baissière.'}",
-            )
-
-        if len(close) >= 250:
-            perf = round((float(close.iloc[-1]) / float(close.iloc[-250]) - 1) * 100, 1)
-            out[f"perf1y_{prefix}"] = _ind(
-                _norm(perf, -60, 120),
-                f"{'+' if perf >= 0 else ''}{perf} %", " (1 an)",
-                "buy" if perf > 10 else "sell" if perf < -10 else "neutral",
-                f"Performance {label} sur 12 mois : {perf:+.1f} %.",
-            )
-
-    except Exception as e:
-        print(f"[matieres] {ticker}: {e}")
-    return out
-
-
 
 def _commodity_block(ticker, prefix, label, price_unit="$", round_price=2):
     """RSI, MACD, MM50, MM200 et perf 1 an pour un future ou ETF commodity."""

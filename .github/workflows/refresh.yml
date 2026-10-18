@@ -1,0 +1,67 @@
+name: Refresh data
+
+on:
+  schedule:
+    - cron: "17 * * * *"      # toutes les heures (minute 17 : moins de retard qu'à :00)
+  workflow_dispatch:           # lancement manuel depuis l'onglet Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Récupérer l'état précédent (branche data)
+        run: |
+          if git ls-remote --exit-code --heads origin data >/dev/null 2>&1; then
+            git clone --quiet --depth 1 --branch data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" out
+            rm -rf out/.git
+          else
+            mkdir out
+          fi
+
+      - name: Calculer indicateurs, signaux, analytics
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python scripts/build_data.py --out out --alert-file "$RUNNER_TEMP/alert.json"
+
+      - name: Publier sur la branche data
+        run: |
+          cd out
+          touch .nojekyll
+          git init --quiet -b data
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit --quiet -m "data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push --quiet --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+
+      - name: Envoyer l'alerte email (si un signal a changé)
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ALERT_EMAILS: ${{ secrets.ALERT_EMAILS }}
+        run: |
+          if [ -f "$RUNNER_TEMP/alert.json" ]; then
+            python scripts/send_alert.py "$RUNNER_TEMP/alert.json"
+          else
+            echo "Aucun changement de signal."
+          fi

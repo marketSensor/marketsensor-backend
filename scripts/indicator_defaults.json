@@ -1,0 +1,907 @@
+{
+ "bourse": [
+  {
+   "name": "Momentum",
+   "indicators": [
+    {
+     "id": "rsi_spx",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_spx",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "stoch",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Tendance",
+   "indicators": [
+    {
+     "id": "mm50",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "mm200",
+     "w": 3,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "cross",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Volatilité",
+   "indicators": [
+    {
+     "id": "vix",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "bollinger",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "atr",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Sentiment",
+   "indicators": [
+    {
+     "id": "fg_spx",
+     "w": 3,
+     "sig": "neutral",
+     "source": "simulated"
+    },
+    {
+     "id": "putcall",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "aaii",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "MSCI World — CW8 (Amundi)",
+   "indicators": [
+    {
+     "id": "rsi_cw8",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_cw8",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_cw8",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_cw8",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "stoch_cw8",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "S&P 500 ETF — ESE (Amundi)",
+   "indicators": [
+    {
+     "id": "rsi_ese",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_ese",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_ese",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_ese",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "stoch_ese",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Marchés Émergents — PAEEM (Amundi)",
+   "indicators": [
+    {
+     "id": "rsi_paeem",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_paeem",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_paeem",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_paeem",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "stoch_paeem",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Asie Pac. ex-Japon — PAASI (Amundi)",
+   "indicators": [
+    {
+     "id": "rsi_paasi",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_paasi",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_paasi",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_paasi",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "stoch_paasi",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Valorisation",
+   "indicators": [
+    {
+     "id": "cape",
+     "w": 3,
+     "sig": "sell",
+     "source": "live"
+    },
+    {
+     "id": "pe_fwd",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  }
+ ],
+ "crypto": [
+  {
+   "name": "Métriques On-Chain",
+   "indicators": [
+    {
+     "id": "mvrv",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "nupl",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "sopr",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "cdd",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "nvt",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "hashrate",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Sentiment Crypto",
+   "indicators": [
+    {
+     "id": "cfg",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "btcdom",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "funding",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Indicateurs de Cycle",
+   "indicators": [
+    {
+     "id": "picycle",
+     "w": 3,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "puell",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mayer",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rainbow",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Indicateurs Sociaux",
+   "indicators": [
+    {
+     "id": "google_trends",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "coinbase_rank",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "binance_rank",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Halving & Cycles BTC",
+   "indicators": [
+    {
+     "id": "days_since_halving",
+     "w": 3,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "days_until_halving",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "cycle_progress",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Analyse Technique BTC",
+   "indicators": [
+    {
+     "id": "btcrsi",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "btcrsim",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "btcmacd",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "bollinger_btc",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "atr_btc",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "btcsupp",
+     "w": 1,
+     "sig": "buy",
+     "source": "simulated"
+    }
+   ]
+  },
+  {
+   "name": "Ethereum (ETH)",
+   "indicators": [
+    {
+     "id": "rsi_eth",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_eth",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_eth",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_eth",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "bollinger_eth",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "vs_btc_eth",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Solana (SOL)",
+   "indicators": [
+    {
+     "id": "rsi_sol",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_sol",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_sol",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_sol",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "bollinger_sol",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "vs_btc_sol",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Hyperliquid (HYPE)",
+   "indicators": [
+    {
+     "id": "rsi_hype",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_hype",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_hype",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "bollinger_hype",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "vs_btc_hype",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  }
+ ],
+ "matieres": [
+  {
+   "name": "Macro & Dollar",
+   "indicators": [
+    {
+     "id": "dxy",
+     "w": 3,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "realrates",
+     "w": 3,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "cpi",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Or (GC=F)",
+   "indicators": [
+    {
+     "id": "rsi_gold",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_gold",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_gold",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_gold",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "perf1y_gold",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "goldsil",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "cbgold",
+     "w": 3,
+     "sig": "buy",
+     "source": "simulated"
+    }
+   ]
+  },
+  {
+   "name": "Argent (SI=F)",
+   "indicators": [
+    {
+     "id": "rsi_silver",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_silver",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_silver",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_silver",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "perf1y_silver",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Petrole & Energie",
+   "indicators": [
+    {
+     "id": "rsi_wti",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_wti",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_wti",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_wti",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "perf1y_wti",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rsi_brent",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_brent",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_brent",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rsi_ng",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_ng",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_ng",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "gold_oil_ratio",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Uranium & Nucleaire",
+   "indicators": [
+    {
+     "id": "rsi_ura",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_ura",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_ura",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "perf1y_ura",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rsi_urnm",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_urnm",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_urnm",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rsi_ccj",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_ccj",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_ccj",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "nuclear",
+     "w": 3,
+     "sig": "buy",
+     "source": "simulated"
+    }
+   ]
+  },
+  {
+   "name": "Platine & Palladium",
+   "indicators": [
+    {
+     "id": "rsi_platinum",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_platinum",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_platinum",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "perf1y_platinum",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rsi_palladium",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_palladium",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "platpall",
+     "w": 2,
+     "sig": "buy",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Metaux Industriels",
+   "indicators": [
+    {
+     "id": "rsi_copper",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_copper",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm50_copper",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_copper",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "perf1y_copper",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rsi_alum",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "macd_alum",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "mm200_alum",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  }
+ ]
+}
