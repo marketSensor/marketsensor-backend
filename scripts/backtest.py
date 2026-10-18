@@ -87,7 +87,9 @@ def _stats(sig: pd.Series, fwd: dict) -> dict:
 def _verdict(st: dict) -> tuple[str, dict]:
     edge = {}
     for h in HORIZONS:
-        b, s = st["mean"][str(h)]["buy"], st["mean"][str(h)]["sell"]
+        m = st["mean"][str(h)]
+        b = m["buy"]
+        s = m["sell"] if m["sell"] is not None else m["neutral"]   # pas assez de signaux de vente : on compare à « neutre »
         edge[str(h)] = round(b - s, 2) if b is not None and s is not None else None
     e63, e252 = edge[str(HORIZONS[0])], edge[str(HORIZONS[1])]
     if e63 is None or e252 is None:
@@ -121,7 +123,7 @@ def run() -> dict:
         except Exception as e:
             print(f"[backtest] {name}: {e}")
 
-    attempt("vix", lambda: _sig(al(_close("^VIX")), lambda s: s < 15, lambda s: s > 30))
+    attempt("vix", lambda: _sig(al(_close("^VIX")), lambda s: s > 30, lambda s: s < 0))   # règle du site : VIX > 30 = achat contrariant
     attempt("skew", lambda: _sig(al(_close("^SKEW")), lambda s: s < 120, lambda s: s > 150))
     attempt("vix_term", lambda: _sig(al(_close("^VIX")) / al(_close("^VIX3M")),
                                      lambda s: s < 0.9, lambda s: s > 1.05))

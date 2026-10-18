@@ -99,6 +99,14 @@ def probe_misc():
          lambda r: {"octets": len(r.content), "type": r.headers.get("content-type")}),
         ("Treasury taux (CSV)", "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2026&page&_format=csv",
          lambda r: r.text[:200]),
+        ("multpl Shiller PE", "https://www.multpl.com/shiller-pe",
+         lambda r: {"len": len(r.text), "current-value": ("current-value" in r.text), "debut": r.text[:120]}),
+        ("multpl S&P 500 PE", "https://www.multpl.com/s-p-500-pe-ratio",
+         lambda r: {"len": len(r.text), "current": ("current" in r.text), "debut": r.text[:120]}),
+        ("Shiller ie_data.xls (Yale)", "http://www.econ.yale.edu/~shiller/data/ie_data.xls",
+         lambda r: {"octets": len(r.content), "type": r.headers.get("content-type")}),
+        ("Shiller ie_data.xls (miroir)", "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls",
+         lambda r: {"octets": len(r.content), "type": r.headers.get("content-type")}),
     ]
     with ThreadPoolExecutor(max_workers=6) as ex:
         return list(ex.map(lambda t: _safe(t[0], lambda: _http(t[1], t[2])), items))

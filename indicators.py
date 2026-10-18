@@ -518,13 +518,15 @@ def _bourse() -> dict:
     # ── VIX ──────────────────────────────────────────────────────
     try:
         vix_price = round(float(yf.Ticker("^VIX").history(period="5d")["Close"].iloc[-1]), 1)
-        v_sig = "sell" if vix_price > 30 else "buy" if vix_price < 15 else "neutral"
+        # Test rétroactif (1990-2026) : après un VIX > 30, le S&P 500 a gagné en moyenne ~+7 % à 3 mois
+        # contre ~+2 % sinon ; un VIX bas n'a pas été un signal de vente fiable -> signal contrariant.
+        v_sig = "buy" if vix_price > 30 else "neutral"
         out["vix"] = _ind(
             _norm(vix_price, 10, 50), vix_price, "",
             v_sig,
             f"VIX à {vix_price} — "
-            + ("marché très anxieux, opportunité contrariante." if vix_price > 30
-               else "complacence élevée, méfiance vis-à-vis des chocs." if vix_price < 15
+            + ("marché très anxieux : historiquement, les mois suivants ont été nettement meilleurs que la moyenne (signal contrariant)." if vix_price > 30
+               else "complacence élevée, mais un VIX bas n'a pas été un signal de vente fiable." if vix_price < 15
                else "volatilité modérée, marché relativement serein."),
         )
     except Exception as e:
