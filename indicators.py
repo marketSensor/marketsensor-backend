@@ -264,6 +264,20 @@ def _binance_funding_rate(symbol: str = "BTCUSDT") -> float | None:
             return float(data["fundingRate"])
     except Exception as e:
         print(f"[Binance] funding rate: {e}")
+    # Binance refuse les IP américaines (HTTP 451, serveurs GitHub) : repli sur OKX, même contrat perpétuel BTC
+    return _okx_funding_rate(symbol)
+
+
+def _okx_funding_rate(symbol: str = "BTCUSDT") -> float | None:
+    """Funding rate OKX (API publique), en fraction par période de 8 h comme Binance."""
+    inst = symbol.replace("USDT", "-USDT-SWAP")
+    try:
+        r    = requests.get(f"https://www.okx.com/api/v5/public/funding-rate?instId={inst}", timeout=TIMEOUT, headers=HEADERS)
+        rows = r.json().get("data") or []
+        if rows:
+            return float(rows[0]["fundingRate"])
+    except Exception as e:
+        print(f"[OKX] funding rate: {e}")
     return None
 
 
