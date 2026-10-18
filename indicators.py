@@ -205,6 +205,25 @@ def _fred_yoy(series_id: str) -> float | None:
         return None
 
 
+def _shiller_cape() -> float | None:
+    """CAPE depuis le classeur de Robert Shiller (Yale), mis à jour chaque mois."""
+    try:
+        r = requests.get("http://www.econ.yale.edu/~shiller/data/ie_data.xls",
+                         headers=HEADERS, timeout=TIMEOUT + 18)
+        r.raise_for_status()
+        raw = pd.read_excel(io.BytesIO(r.content), sheet_name="Data", header=None)
+        for ri in range(min(25, len(raw))):                       # ligne d'en-tête contenant « CAPE »
+            for ci, cell in enumerate(raw.iloc[ri]):
+                if isinstance(cell, str) and cell.strip().upper() == "CAPE":
+                    col = pd.to_numeric(raw.iloc[ri + 1:, ci], errors="coerce").dropna()
+                    if len(col):
+                        return round(float(col.iloc[-1]), 1)
+        print("[shiller] colonne CAPE introuvable")
+    except Exception as e:
+        print(f"[shiller] CAPE: {type(e).__name__}: {e}")
+    return None
+
+
 def _scrape_cape() -> float | None:
     try:
         r    = requests.get("https://www.multpl.com/shiller-pe",
@@ -213,9 +232,10 @@ def _scrape_cape() -> float | None:
         el   = soup.select_one("#current-value")
         if el:
             return float(el.text.strip().replace(",", "."))
+        print("[scrape] CAPE : élément #current-value absent de multpl.com")
     except Exception as e:
         print(f"[scrape] CAPE: {e}")
-    return None
+    return _shiller_cape()
 
 
 def _cboe_put_call() -> float | None:
@@ -540,7 +560,7 @@ def _bourse() -> dict:
             out["cape"] = _ind(
                 _norm(cape, 10, 45), round(cape, 1), "x",
                 c_sig,
-                f"Shiller CAPE à {round(cape,1)}x (multpl.com) — "
+                f"Shiller CAPE à {round(cape,1)}x (Shiller / multpl.com) — "
                 + ("marchés fortement surévalués (moy. historique ~16x). Prudence long terme." if cape > 30
                    else "valorisation attrayante." if cape < 15
                    else "valorisation dans la moyenne historique."),
