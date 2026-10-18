@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from importlib import metadata
@@ -93,6 +94,40 @@ def _probe(host: str) -> dict:
         return {"host": host, "error": redact(f"{type(e).__name__}: {e}")[:200]}
 
 
+def _bitbo_samples() -> list[dict]:
+    """Réponse brute de Bitbo (code, en-têtes de limite, début du contenu) : les 6 indicateurs on-chain restent vides sans erreur visible."""
+    src = (ROOT / "indicators.py").read_text(encoding="utf-8", errors="ignore") if (ROOT / "indicators.py").exists() else ""
+    if "charts.bitbo.io" not in src:
+        return []
+    mod = sys.modules.get("indicators")
+    headers = dict(getattr(mod, "HEADERS", {"User-Agent": "Mozilla/5.0"}))
+    time.sleep(15)  # Bitbo limite à 5 requêtes par minute : on laisse retomber la rafale du build
+    out = []
+    for i, endpoint in enumerate(("mvrv-zscore", "nupl-ratio", "sopr")):
+        if i:
+            time.sleep(13)
+        url = f"https://charts.bitbo.io/api/v1/{endpoint}/?latest=true"
+        try:
+            r = requests.get(url, headers=headers, timeout=15)
+            item = {"endpoint": endpoint, "status": r.status_code, "content_type": r.headers.get("content-type"),
+                    "limit_headers": {k: v for k, v in r.headers.items() if re.search(r"(?i)rate|retry|limit", k)},
+                    "body": redact(r.text[:400])}
+            try:
+                j = r.json()
+                item["json_type"] = type(j).__name__
+                if isinstance(j, dict):
+                    item["json_keys"] = list(j)[:10]
+                    rows = j.get("data")
+                    item["rows"] = len(rows) if isinstance(rows, list) else None
+                    item["last_row"] = rows[-1] if isinstance(rows, list) and rows else None
+            except Exception as e:
+                item["json_error"] = f"{type(e).__name__}"
+            out.append(item)
+        except Exception as e:
+            out.append({"endpoint": endpoint, "error": redact(f"{type(e).__name__}: {e}")[:200]})
+    return out
+
+
 def _version(pkg: str):
     try:
         return metadata.version(pkg)
@@ -121,6 +156,7 @@ def finish(out_dir) -> None:
             "versions": {p: _version(p) for p in ("yfinance", "pandas", "numpy", "requests", "curl_cffi")},
             "secrets_present": {n: bool(os.environ.get(n)) for n in SECRET_ENV},
             "probes": probes,
+            "bitbo": _bitbo_samples(),
             "log_lines_total": len(_lines),
             "log": kept[:MAX_LINES],
         }
