@@ -5,6 +5,7 @@
    "indicators": [
     {
      "id": "rsi_spx",
+     "name": "RSI S&P 500 (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -12,6 +13,7 @@
     },
     {
      "id": "macd_spx",
+     "name": "MACD S&P 500",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -19,6 +21,7 @@
     },
     {
      "id": "stoch",
+     "name": "Stochastique (14,3)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -31,6 +34,7 @@
    "indicators": [
     {
      "id": "mm50",
+     "name": "Prix vs MM50",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -38,6 +42,7 @@
     },
     {
      "id": "mm200",
+     "name": "Prix vs MM200",
      "w": 3,
      "sig": "buy",
      "source": "live",
@@ -45,6 +50,7 @@
     },
     {
      "id": "cross",
+     "name": "Golden / Death Cross",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -57,6 +63,7 @@
    "indicators": [
     {
      "id": "vix",
+     "name": "VIX (Cboe)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -64,6 +71,7 @@
     },
     {
      "id": "bollinger",
+     "name": "Bollinger Bands",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -71,6 +79,7 @@
     },
     {
      "id": "atr",
+     "name": "ATR (volatilité hist.)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -83,6 +92,7 @@
    "indicators": [
     {
      "id": "fg_spx",
+     "name": "Fear & Greed Index",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -90,6 +100,7 @@
     },
     {
      "id": "putcall",
+     "name": "Put / Call Ratio",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -97,6 +108,7 @@
     },
     {
      "id": "aaii",
+     "name": "AAII Sentiment",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -109,6 +121,7 @@
    "indicators": [
     {
      "id": "rsi_cw8",
+     "name": "RSI CW8 (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -116,6 +129,7 @@
     },
     {
      "id": "macd_cw8",
+     "name": "MACD CW8",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -123,6 +137,7 @@
     },
     {
      "id": "mm50_cw8",
+     "name": "CW8 vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -130,6 +145,7 @@
     },
     {
      "id": "mm200_cw8",
+     "name": "CW8 vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -137,6 +153,7 @@
     },
     {
      "id": "stoch_cw8",
+     "name": "Stochastique CW8",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -149,6 +166,7 @@
    "indicators": [
     {
      "id": "rsi_ese",
+     "name": "RSI ESE (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -156,6 +174,7 @@
     },
     {
      "id": "macd_ese",
+     "name": "MACD ESE",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -163,6 +182,7 @@
     },
     {
      "id": "mm50_ese",
+     "name": "ESE vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -170,6 +190,7 @@
     },
     {
      "id": "mm200_ese",
+     "name": "ESE vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -177,6 +198,7 @@
     },
     {
      "id": "stoch_ese",
+     "name": "Stochastique ESE",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -189,6 +211,7 @@
    "indicators": [
     {
      "id": "rsi_paeem",
+     "name": "RSI PAEEM (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -196,6 +219,7 @@
     },
     {
      "id": "macd_paeem",
+     "name": "MACD PAEEM",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -203,6 +227,7 @@
     },
     {
      "id": "mm50_paeem",
+     "name": "PAEEM vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -210,6 +235,7 @@
     },
     {
      "id": "mm200_paeem",
+     "name": "PAEEM vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -217,6 +243,7 @@
     },
     {
      "id": "stoch_paeem",
+     "name": "Stochastique PAEEM",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -229,6 +256,7 @@
    "indicators": [
     {
      "id": "rsi_paasi",
+     "name": "RSI PAASI (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -236,6 +264,7 @@
     },
     {
      "id": "macd_paasi",
+     "name": "MACD PAASI",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -243,6 +272,7 @@
     },
     {
      "id": "mm50_paasi",
+     "name": "PAASI vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -250,6 +280,7 @@
     },
     {
      "id": "mm200_paasi",
+     "name": "PAASI vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -257,6 +288,7 @@
     },
     {
      "id": "stoch_paasi",
+     "name": "Stochastique PAASI",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -269,6 +301,7 @@
    "indicators": [
     {
      "id": "yield_curve",
+     "name": "Courbe des taux (10a − 3m)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -276,6 +309,7 @@
     },
     {
      "id": "hy_spread",
+     "name": "Écart de crédit High Yield",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -283,6 +317,7 @@
     },
     {
      "id": "fin_stress",
+     "name": "Stress financier (St. Louis Fed)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -290,6 +325,7 @@
     },
     {
      "id": "sahm",
+     "name": "Règle de Sahm (récession)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -297,6 +333,7 @@
     },
     {
      "id": "fed_liq",
+     "name": "Liquidité Fed (bilan 3 mois)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -309,6 +346,7 @@
    "indicators": [
     {
      "id": "breadth",
+     "name": "Largeur : S&P équipondéré vs pondéré",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -316,6 +354,7 @@
     },
     {
      "id": "rotation",
+     "name": "Rotation : cyclique vs défensif",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -323,6 +362,7 @@
     },
     {
      "id": "vix_term",
+     "name": "Structure du VIX (VIX/VIX3M)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -330,6 +370,7 @@
     },
     {
      "id": "skew",
+     "name": "Indice SKEW (risque de krach)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -342,6 +383,7 @@
    "indicators": [
     {
      "id": "erp",
+     "name": "Prime de risque actions (CAPE − taux réel)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -349,6 +391,7 @@
     },
     {
      "id": "cape",
+     "name": "Shiller CAPE",
      "w": 3,
      "sig": "sell",
      "source": "live",
@@ -356,6 +399,7 @@
     },
     {
      "id": "pe_fwd",
+     "name": "P/E Trailing S&P 500",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -370,6 +414,7 @@
    "indicators": [
     {
      "id": "mvrv",
+     "name": "MVRV Z-Score",
      "w": 3,
      "sig": "neutral",
      "source": "simulated",
@@ -377,6 +422,7 @@
     },
     {
      "id": "nupl",
+     "name": "NUPL",
      "w": 3,
      "sig": "neutral",
      "source": "simulated",
@@ -384,6 +430,7 @@
     },
     {
      "id": "sopr",
+     "name": "SOPR",
      "w": 2,
      "sig": "neutral",
      "source": "simulated",
@@ -391,6 +438,7 @@
     },
     {
      "id": "cdd",
+     "name": "Coin Days Destroyed",
      "w": 2,
      "sig": "neutral",
      "source": "simulated",
@@ -398,6 +446,7 @@
     },
     {
      "id": "nvt",
+     "name": "NVT Signal",
      "w": 2,
      "sig": "neutral",
      "source": "simulated",
@@ -405,6 +454,7 @@
     },
     {
      "id": "hashrate",
+     "name": "Hash Rate BTC",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -417,6 +467,7 @@
    "indicators": [
     {
      "id": "mvrv_ratio",
+     "name": "MVRV Bitcoin (ratio)",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -424,6 +475,7 @@
     },
     {
      "id": "ls_ratio",
+     "name": "Long / Short BTC (OKX)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -431,6 +483,7 @@
     },
     {
      "id": "stablecoins",
+     "name": "Offre de stablecoins (30 j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -443,6 +496,7 @@
    "indicators": [
     {
      "id": "cfg",
+     "name": "Crypto Fear & Greed",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -450,6 +504,7 @@
     },
     {
      "id": "btcdom",
+     "name": "Bitcoin Dominance",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -457,6 +512,7 @@
     },
     {
      "id": "funding",
+     "name": "Funding Rate Perps",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -469,6 +525,7 @@
    "indicators": [
     {
      "id": "picycle",
+     "name": "Pi Cycle Top",
      "w": 3,
      "sig": "buy",
      "source": "live",
@@ -476,6 +533,7 @@
     },
     {
      "id": "puell",
+     "name": "Puell Multiple",
      "w": 2,
      "sig": "neutral",
      "source": "simulated",
@@ -483,6 +541,7 @@
     },
     {
      "id": "mayer",
+     "name": "Mayer Multiple",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -490,6 +549,7 @@
     },
     {
      "id": "rainbow",
+     "name": "Rainbow Chart Zone",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -502,6 +562,7 @@
    "indicators": [
     {
      "id": "google_trends",
+     "name": "Google Trends \"Bitcoin\"",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -509,6 +570,7 @@
     },
     {
      "id": "coinbase_rank",
+     "name": "Coinbase — App Store",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -516,6 +578,7 @@
     },
     {
      "id": "binance_rank",
+     "name": "Binance — App Store",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -528,6 +591,7 @@
    "indicators": [
     {
      "id": "days_since_halving",
+     "name": "Jours depuis le halving",
      "w": 3,
      "sig": "buy",
      "source": "live",
@@ -535,6 +599,7 @@
     },
     {
      "id": "days_until_halving",
+     "name": "Jours avant le halving",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -542,6 +607,7 @@
     },
     {
      "id": "cycle_progress",
+     "name": "Progression du cycle",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -554,6 +620,7 @@
    "indicators": [
     {
      "id": "btcrsi",
+     "name": "RSI Bitcoin Journalier",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -561,6 +628,7 @@
     },
     {
      "id": "btcrsim",
+     "name": "RSI Bitcoin Mensuel",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -568,6 +636,7 @@
     },
     {
      "id": "btcmacd",
+     "name": "MACD Bitcoin",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -575,6 +644,7 @@
     },
     {
      "id": "bollinger_btc",
+     "name": "Bollinger Bands BTC",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -582,6 +652,7 @@
     },
     {
      "id": "atr_btc",
+     "name": "Volatilité ATR BTC",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -589,6 +660,7 @@
     },
     {
      "id": "btcsupp",
+     "name": "Support / Résistance",
      "w": 1,
      "sig": "buy",
      "source": "simulated",
@@ -601,6 +673,7 @@
    "indicators": [
     {
      "id": "rsi_eth",
+     "name": "RSI ETH (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -608,6 +681,7 @@
     },
     {
      "id": "macd_eth",
+     "name": "MACD ETH",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -615,6 +689,7 @@
     },
     {
      "id": "mm50_eth",
+     "name": "ETH vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -622,6 +697,7 @@
     },
     {
      "id": "mm200_eth",
+     "name": "ETH vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -629,6 +705,7 @@
     },
     {
      "id": "bollinger_eth",
+     "name": "Bollinger ETH",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -636,6 +713,7 @@
     },
     {
      "id": "vs_btc_eth",
+     "name": "ETH vs BTC (90j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -648,6 +726,7 @@
    "indicators": [
     {
      "id": "rsi_sol",
+     "name": "RSI SOL (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -655,6 +734,7 @@
     },
     {
      "id": "macd_sol",
+     "name": "MACD SOL",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -662,6 +742,7 @@
     },
     {
      "id": "mm50_sol",
+     "name": "SOL vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -669,6 +750,7 @@
     },
     {
      "id": "mm200_sol",
+     "name": "SOL vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -676,6 +758,7 @@
     },
     {
      "id": "bollinger_sol",
+     "name": "Bollinger SOL",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -683,6 +766,7 @@
     },
     {
      "id": "vs_btc_sol",
+     "name": "SOL vs BTC (90j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -695,6 +779,7 @@
    "indicators": [
     {
      "id": "rsi_hype",
+     "name": "RSI HYPE (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -702,6 +787,7 @@
     },
     {
      "id": "macd_hype",
+     "name": "MACD HYPE",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -709,6 +795,7 @@
     },
     {
      "id": "mm50_hype",
+     "name": "HYPE vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -716,6 +803,7 @@
     },
     {
      "id": "bollinger_hype",
+     "name": "Bollinger HYPE",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -723,6 +811,7 @@
     },
     {
      "id": "vs_btc_hype",
+     "name": "HYPE vs BTC (90j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -737,6 +826,7 @@
    "indicators": [
     {
      "id": "dxy",
+     "name": "Dollar Index (DXY)",
      "w": 3,
      "sig": "buy",
      "source": "live",
@@ -744,6 +834,7 @@
     },
     {
      "id": "realrates",
+     "name": "Taux réels (TIPS 10y)",
      "w": 3,
      "sig": "buy",
      "source": "live",
@@ -751,6 +842,7 @@
     },
     {
      "id": "infl_be",
+     "name": "Inflation anticipée 10 ans",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -758,6 +850,7 @@
     },
     {
      "id": "fed_liq",
+     "name": "Liquidité Fed (bilan 3 mois)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -765,6 +858,7 @@
     },
     {
      "id": "cpi",
+     "name": "Inflation CPI (USA)",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -777,6 +871,7 @@
    "indicators": [
     {
      "id": "rsi_gold",
+     "name": "RSI Or (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -784,6 +879,7 @@
     },
     {
      "id": "macd_gold",
+     "name": "MACD Or",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -791,6 +887,7 @@
     },
     {
      "id": "mm50_gold",
+     "name": "Or vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -798,6 +895,7 @@
     },
     {
      "id": "mm200_gold",
+     "name": "Or vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -805,6 +903,7 @@
     },
     {
      "id": "perf1y_gold",
+     "name": "Performance Or 1 an",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -812,6 +911,7 @@
     },
     {
      "id": "goldsil",
+     "name": "Ratio Or / Argent",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -819,6 +919,7 @@
     },
     {
      "id": "cbgold",
+     "name": "Achats Banques Centrales",
      "w": 3,
      "sig": "buy",
      "source": "simulated",
@@ -831,6 +932,7 @@
    "indicators": [
     {
      "id": "rsi_silver",
+     "name": "RSI Argent (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -838,6 +940,7 @@
     },
     {
      "id": "macd_silver",
+     "name": "MACD Argent",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -845,6 +948,7 @@
     },
     {
      "id": "mm50_silver",
+     "name": "Argent vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -852,6 +956,7 @@
     },
     {
      "id": "mm200_silver",
+     "name": "Argent vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -859,6 +964,7 @@
     },
     {
      "id": "perf1y_silver",
+     "name": "Performance Argent 1 an",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -871,6 +977,7 @@
    "indicators": [
     {
      "id": "rsi_wti",
+     "name": "RSI Petrole WTI (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -878,6 +985,7 @@
     },
     {
      "id": "macd_wti",
+     "name": "MACD WTI",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -885,6 +993,7 @@
     },
     {
      "id": "mm50_wti",
+     "name": "WTI vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -892,6 +1001,7 @@
     },
     {
      "id": "mm200_wti",
+     "name": "WTI vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -899,6 +1009,7 @@
     },
     {
      "id": "perf1y_wti",
+     "name": "Performance WTI 1 an",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -906,6 +1017,7 @@
     },
     {
      "id": "rsi_brent",
+     "name": "RSI Brent (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -913,6 +1025,7 @@
     },
     {
      "id": "macd_brent",
+     "name": "MACD Brent",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -920,6 +1033,7 @@
     },
     {
      "id": "mm200_brent",
+     "name": "Brent vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -927,6 +1041,7 @@
     },
     {
      "id": "rsi_ng",
+     "name": "RSI Gaz Naturel (14j)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -934,6 +1049,7 @@
     },
     {
      "id": "macd_ng",
+     "name": "MACD Gaz Naturel",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -941,6 +1057,7 @@
     },
     {
      "id": "mm200_ng",
+     "name": "Gaz Naturel vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -948,6 +1065,7 @@
     },
     {
      "id": "gold_oil_ratio",
+     "name": "Ratio Or / Petrole",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -960,6 +1078,7 @@
    "indicators": [
     {
      "id": "rsi_ura",
+     "name": "RSI URA ETF (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -967,6 +1086,7 @@
     },
     {
      "id": "macd_ura",
+     "name": "MACD URA",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -974,6 +1094,7 @@
     },
     {
      "id": "mm200_ura",
+     "name": "URA vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -981,6 +1102,7 @@
     },
     {
      "id": "perf1y_ura",
+     "name": "Performance URA 1 an",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -988,6 +1110,7 @@
     },
     {
      "id": "rsi_urnm",
+     "name": "RSI URNM (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -995,6 +1118,7 @@
     },
     {
      "id": "macd_urnm",
+     "name": "MACD URNM",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1002,6 +1126,7 @@
     },
     {
      "id": "mm200_urnm",
+     "name": "URNM vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1009,6 +1134,7 @@
     },
     {
      "id": "rsi_ccj",
+     "name": "RSI Cameco CCJ (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1016,6 +1142,7 @@
     },
     {
      "id": "macd_ccj",
+     "name": "MACD Cameco",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1023,6 +1150,7 @@
     },
     {
      "id": "mm200_ccj",
+     "name": "Cameco vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1030,6 +1158,7 @@
     },
     {
      "id": "nuclear",
+     "name": "Demande Nucleaire",
      "w": 3,
      "sig": "buy",
      "source": "simulated",
@@ -1042,6 +1171,7 @@
    "indicators": [
     {
      "id": "rsi_platinum",
+     "name": "RSI Platine (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1049,6 +1179,7 @@
     },
     {
      "id": "macd_platinum",
+     "name": "MACD Platine",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1056,6 +1187,7 @@
     },
     {
      "id": "mm200_platinum",
+     "name": "Platine vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1063,6 +1195,7 @@
     },
     {
      "id": "perf1y_platinum",
+     "name": "Perf Platine 1 an",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1070,6 +1203,7 @@
     },
     {
      "id": "rsi_palladium",
+     "name": "RSI Palladium (14j)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1077,6 +1211,7 @@
     },
     {
      "id": "mm200_palladium",
+     "name": "Palladium vs MM200",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1084,6 +1219,7 @@
     },
     {
      "id": "platpall",
+     "name": "Ratio Platine / Palladium",
      "w": 2,
      "sig": "buy",
      "source": "live",
@@ -1096,6 +1232,7 @@
    "indicators": [
     {
      "id": "rsi_copper",
+     "name": "RSI Cuivre (14j)",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1103,6 +1240,7 @@
     },
     {
      "id": "macd_copper",
+     "name": "MACD Cuivre",
      "w": 2,
      "sig": "neutral",
      "source": "live",
@@ -1110,6 +1248,7 @@
     },
     {
      "id": "mm50_copper",
+     "name": "Cuivre vs MM50",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1117,6 +1256,7 @@
     },
     {
      "id": "mm200_copper",
+     "name": "Cuivre vs MM200",
      "w": 3,
      "sig": "neutral",
      "source": "live",
@@ -1124,6 +1264,7 @@
     },
     {
      "id": "perf1y_copper",
+     "name": "Perf Cuivre 1 an",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1131,6 +1272,7 @@
     },
     {
      "id": "rsi_alum",
+     "name": "RSI Aluminium (14j)",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1138,6 +1280,7 @@
     },
     {
      "id": "macd_alum",
+     "name": "MACD Aluminium",
      "w": 1,
      "sig": "neutral",
      "source": "live",
@@ -1145,6 +1288,7 @@
     },
     {
      "id": "mm200_alum",
+     "name": "Aluminium vs MM200",
      "w": 2,
      "sig": "neutral",
      "source": "live",

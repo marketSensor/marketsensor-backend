@@ -40,6 +40,8 @@ jobs:
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           BITBO_API_KEY: ${{ secrets.BITBO_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optionnel : active l'analyse rédigée par l'IA
+          ANALYST_MODEL: ${{ vars.ANALYST_MODEL }}
         run: python scripts/build_data.py --out out --alert-file "$RUNNER_TEMP/alert.json"
 
       - name: Publier sur la branche data
