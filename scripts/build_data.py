@@ -29,6 +29,7 @@ MIN_TAB = 5               # sous ce nombre d'indicateurs par onglet : onglet exc
 HISTORY_DAYS = 90
 HISTORY_PUBLISHED = 60    # le frontend lisait ?limit=60
 CALENDAR_DAYS = 180
+BACKTEST_EVERY_DAYS = 7
 
 
 def _clean(o):
@@ -151,6 +152,16 @@ def main() -> int:
         write_json(out / "analytics.json", indicators.get_analytics())
     except Exception as e:
         print(f"::warning::analytics non mis à jour : {e}")
+
+    # 5b. Test rétroactif des signaux (une fois par semaine ; échec = l'ancien backtest.json reste en place)
+    try:
+        old = read_json(out / "backtest.json", {})
+        age = (now_dt - datetime.fromisoformat(old["generated"].replace("Z", "+00:00"))).days if old.get("generated") else 999
+        if age >= BACKTEST_EVERY_DAYS:
+            import backtest
+            write_json(out / "backtest.json", backtest.run())
+    except Exception as e:
+        print(f"::warning::backtest non mis à jour : {type(e).__name__}: {e}")
 
     # 6. Calendrier
     events = calendar_events(now_dt.date())

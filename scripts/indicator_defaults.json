@@ -7,19 +7,22 @@
      "id": "rsi_spx",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_spx",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "stoch",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -30,19 +33,22 @@
      "id": "mm50",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200",
      "w": 3,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "cross",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -53,19 +59,22 @@
      "id": "vix",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "bollinger",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "atr",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -76,19 +85,22 @@
      "id": "fg_spx",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "putcall",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "aaii",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -99,31 +111,36 @@
      "id": "rsi_cw8",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_cw8",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_cw8",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_cw8",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "stoch_cw8",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -134,31 +151,36 @@
      "id": "rsi_ese",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_ese",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_ese",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_ese",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "stoch_ese",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -169,31 +191,36 @@
      "id": "rsi_paeem",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_paeem",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_paeem",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_paeem",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "stoch_paeem",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -204,31 +231,36 @@
      "id": "rsi_paasi",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_paasi",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_paasi",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_paasi",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "stoch_paasi",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -237,33 +269,38 @@
    "indicators": [
     {
      "id": "yield_curve",
-     "w": 2,
+     "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "hy_spread",
-     "w": 3,
+     "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "fin_stress",
-     "w": 2,
+     "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "sahm",
-     "w": 2,
+     "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "fed_liq",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -274,25 +311,29 @@
      "id": "breadth",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rotation",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "vix_term",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "skew",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -300,16 +341,25 @@
    "name": "Valorisation",
    "indicators": [
     {
+     "id": "erp",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l"
+    },
+    {
      "id": "cape",
      "w": 3,
      "sig": "sell",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "pe_fwd",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   }
@@ -322,37 +372,43 @@
      "id": "mvrv",
      "w": 3,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     },
     {
      "id": "nupl",
      "w": 3,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     },
     {
      "id": "sopr",
      "w": 2,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     },
     {
      "id": "cdd",
      "w": 2,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     },
     {
      "id": "nvt",
      "w": 2,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     },
     {
      "id": "hashrate",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -363,19 +419,22 @@
      "id": "mvrv_ratio",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "ls_ratio",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "stablecoins",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -386,19 +445,22 @@
      "id": "cfg",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "btcdom",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "funding",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -409,25 +471,29 @@
      "id": "picycle",
      "w": 3,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "puell",
      "w": 2,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     },
     {
      "id": "mayer",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rainbow",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -438,19 +504,22 @@
      "id": "google_trends",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "coinbase_rank",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "binance_rank",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -461,19 +530,22 @@
      "id": "days_since_halving",
      "w": 3,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "days_until_halving",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "cycle_progress",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -484,37 +556,43 @@
      "id": "btcrsi",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "btcrsim",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "btcmacd",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "bollinger_btc",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "atr_btc",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "btcsupp",
      "w": 1,
      "sig": "buy",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "c"
     }
    ]
   },
@@ -525,37 +603,43 @@
      "id": "rsi_eth",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_eth",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_eth",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_eth",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "bollinger_eth",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "vs_btc_eth",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -566,37 +650,43 @@
      "id": "rsi_sol",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_sol",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_sol",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_sol",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "bollinger_sol",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "vs_btc_sol",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   },
@@ -607,31 +697,36 @@
      "id": "rsi_hype",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_hype",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_hype",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "bollinger_hype",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "vs_btc_hype",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     }
    ]
   }
@@ -644,31 +739,36 @@
      "id": "dxy",
      "w": 3,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "realrates",
      "w": 3,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "infl_be",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "fed_liq",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "cpi",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -679,43 +779,50 @@
      "id": "rsi_gold",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_gold",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_gold",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_gold",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "perf1y_gold",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "goldsil",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "cbgold",
      "w": 3,
      "sig": "buy",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     }
    ]
   },
@@ -726,31 +833,36 @@
      "id": "rsi_silver",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_silver",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_silver",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_silver",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "perf1y_silver",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -761,73 +873,85 @@
      "id": "rsi_wti",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_wti",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_wti",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_wti",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "perf1y_wti",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rsi_brent",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_brent",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_brent",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rsi_ng",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_ng",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_ng",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "gold_oil_ratio",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -838,67 +962,78 @@
      "id": "rsi_ura",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_ura",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_ura",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "perf1y_ura",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rsi_urnm",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_urnm",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_urnm",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rsi_ccj",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_ccj",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_ccj",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "nuclear",
      "w": 3,
      "sig": "buy",
-     "source": "simulated"
+     "source": "simulated",
+     "h": "l"
     }
    ]
   },
@@ -909,43 +1044,50 @@
      "id": "rsi_platinum",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_platinum",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_platinum",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "perf1y_platinum",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rsi_palladium",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_palladium",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "platpall",
      "w": 2,
      "sig": "buy",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   },
@@ -956,49 +1098,57 @@
      "id": "rsi_copper",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_copper",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm50_copper",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_copper",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "perf1y_copper",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     },
     {
      "id": "rsi_alum",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "macd_alum",
      "w": 1,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "c"
     },
     {
      "id": "mm200_alum",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "live",
+     "h": "l"
     }
    ]
   }
