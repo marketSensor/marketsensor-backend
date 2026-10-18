@@ -17,7 +17,7 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
-SECRET_ENV = ("FRED_API_KEY", "SMTP_USER", "SMTP_PASSWORD", "ALERT_EMAILS")
+SECRET_ENV = ("FRED_API_KEY", "SMTP_USER", "SMTP_PASSWORD", "ALERT_EMAILS", "BITBO_API_KEY")
 _PATTERN = re.compile(r"(?i)\b(api[_-]?key|apikey|key|token|password|passwd|secret|signature)=[^&\s'\"<>]+")
 MAX_LINES, MAX_LEN = 600, 300
 
@@ -103,7 +103,7 @@ def _bitbo_samples() -> list[dict]:
     headers = dict(getattr(mod, "HEADERS", {"User-Agent": "Mozilla/5.0"}))
     time.sleep(15)  # Bitbo limite à 5 requêtes par minute : on laisse retomber la rafale du build
     out = []
-    for i, endpoint in enumerate(("mvrv-zscore", "nupl-ratio", "sopr")):
+    for i, endpoint in enumerate(("mvrv-z-score", "nupl-ratio", "sopr")):
         if i:
             time.sleep(13)
         url = f"https://charts.bitbo.io/api/v1/{endpoint}/?latest=true"
