@@ -207,6 +207,7 @@ def _fred_yoy(series_id: str) -> float | None:
 
 def _shiller_cape() -> float | None:
     """CAPE depuis le classeur de Robert Shiller (Yale), mis à jour chaque mois."""
+    print("[shiller] téléchargement du classeur…")
     try:
         r = requests.get("http://www.econ.yale.edu/~shiller/data/ie_data.xls",
                          headers=HEADERS, timeout=TIMEOUT + 18)
@@ -217,6 +218,7 @@ def _shiller_cape() -> float | None:
                 if isinstance(cell, str) and cell.strip().upper() == "CAPE":
                     col = pd.to_numeric(raw.iloc[ri + 1:, ci], errors="coerce").dropna()
                     if len(col):
+                        print(f"[shiller] CAPE lu : {float(col.iloc[-1]):.1f}")
                         return round(float(col.iloc[-1]), 1)
         print("[shiller] colonne CAPE introuvable")
     except Exception as e:
