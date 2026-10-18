@@ -175,6 +175,13 @@ def main() -> int:
     write_json(out / "signals.json", {"ts": iso, **reco, "unavailable": unavailable})
     write_json(out / "state.json", {"backend": backend_state, "browser": browser_state, "last": last, "history": history})
 
+    # 8. Assistant analyste (dossier.json + analysis.json) — un échec ne bloque jamais la publication
+    try:
+        import analyst
+        analyst.run(out, write_json, iso, backend, browser, reco, history, events, carried)
+    except Exception as e:
+        print(f"::warning::assistant analyste : {type(e).__name__}: {e}")
+
     if changes and args.alert_file:
         Path(args.alert_file).write_text(json.dumps({"changes": changes, "ts": iso}), encoding="utf-8")
     return 0

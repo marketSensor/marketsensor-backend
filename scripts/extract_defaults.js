@@ -15,7 +15,7 @@ const out = {};
 for (const tab of ['bourse', 'crypto', 'matieres']) {
   out[tab] = data[tab].map(g => ({
     name: g.name,
-    indicators: g.indicators.map(x => ({ id: x.id, w: x.w, sig: x.sig, source: x.source, h: x.h })),
+    indicators: g.indicators.map(x => ({ id: x.id, name: x.name, w: x.w, sig: x.sig, source: x.source, h: x.h })),
   }));
 }
 process.stdout.write(JSON.stringify(out, null, 1));
