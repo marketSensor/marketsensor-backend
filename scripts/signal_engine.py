@@ -136,10 +136,26 @@ def browser_signal_patches(src: dict) -> dict:
 
 
 # ── Recommandation (applyPatch + computeReco) ────────────────────
+def _vote(inds):
+    b = s = t = 0
+    for i in inds:
+        if i["source"] != "live":
+            continue
+        t += i["w"]
+        if i["sig"] == "buy":
+            b += i["w"]
+        elif i["sig"] == "sell":
+            s += i["w"]
+    bp = js_round(b / t * 100) if t else 0
+    sp = js_round(s / t * 100) if t else 0
+    return {"sig": "buy" if bp >= 45 else "sell" if sp >= 35 else "neutral", "bp": bp, "sp": sp}
+
+
 def compute_reco(patches_in_order: list[dict]) -> dict:
     """
     patches_in_order : liste de {tab: {id: {"sig": ...}}} appliquée dans l'ordre (backend puis navigateur),
-    comme app.js. Retourne {tab: {"sig","bp","sp"}}.
+    comme app.js. Retourne {tab: {"sig","bp","sp","horizons":{"c":{...},"l":{...}}}}
+    (c = court terme, l = long terme ; le signal principal combine les deux).
     """
     out = {}
     for tab in TABS:
@@ -150,16 +166,6 @@ def compute_reco(patches_in_order: list[dict]) -> dict:
                 if target is not None:
                     target["sig"] = patch.get("sig", target["sig"])
                     target["source"] = "live"
-        b = s = t = 0
-        for i in inds:
-            if i["source"] != "live":
-                continue
-            t += i["w"]
-            if i["sig"] == "buy":
-                b += i["w"]
-            elif i["sig"] == "sell":
-                s += i["w"]
-        bp = js_round(b / t * 100) if t else 0
-        sp = js_round(s / t * 100) if t else 0
-        out[tab] = {"sig": "buy" if bp >= 45 else "sell" if sp >= 35 else "neutral", "bp": bp, "sp": sp}
+        out[tab] = {**_vote(inds),
+                    "horizons": {h: _vote([i for i in inds if i.get("h") == h]) for h in ("c", "l")}}
     return out

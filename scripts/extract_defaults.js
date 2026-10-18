@@ -1,5 +1,5 @@
-// Régénère indicator_defaults.json depuis le app.js du frontend :
-//   node scripts/extract_defaults.js /chemin/vers/marketsensor/app.js > scripts/indicator_defaults.json
+// Régénère indicator_defaults.json depuis le data.js du frontend :
+//   node scripts/extract_defaults.js /chemin/vers/marketsensor/data.js > scripts/indicator_defaults.json
 const fs = require('fs');
 const src = fs.readFileSync(process.argv[2], 'utf8');
 const start = src.indexOf('function defaultData()');
@@ -15,7 +15,7 @@ const out = {};
 for (const tab of ['bourse', 'crypto', 'matieres']) {
   out[tab] = data[tab].map(g => ({
     name: g.name,
-    indicators: g.indicators.map(x => ({ id: x.id, w: x.w, sig: x.sig, source: x.source })),
+    indicators: g.indicators.map(x => ({ id: x.id, w: x.w, sig: x.sig, source: x.source, h: x.h })),
   }));
 }
 process.stdout.write(JSON.stringify(out, null, 1));

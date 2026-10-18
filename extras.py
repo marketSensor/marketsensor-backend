@@ -11,7 +11,31 @@ Chaque fonction renvoie un dict {id: indicateur} ; un indicateur indisponible es
 import requests
 import yfinance as yf
 
-from indicators import _fred, _ind, _norm, HEADERS, TIMEOUT
+import indicators
+from indicators import _ind, _norm, HEADERS, TIMEOUT
+
+
+_ASOF = {}   # série FRED -> date de la dernière observation utilisée
+
+
+def _fred(series_id: str, limit: int = 1):
+    """Comme indicators._fred, mais mémorise la date de la dernière observation valide."""
+    if not indicators.FRED_KEY:
+        return None
+    r = requests.get(
+        "https://api.stlouisfed.org/fred/series/observations",
+        params={"series_id": series_id, "api_key": indicators.FRED_KEY, "file_type": "json",
+                "sort_order": "desc", "limit": max(limit, 5) + 5},
+        timeout=TIMEOUT, headers=HEADERS)
+    obs = [(o["date"], float(o["value"])) for o in r.json().get("observations", []) if o["value"] != "."]
+    if not obs:
+        return None
+    _ASOF[series_id] = obs[0][0]
+    return [v for _, v in obs[:limit]]
+
+
+_SERIES_OF = {"yield_curve": "T10Y3M", "hy_spread": "BAMLH0A0HYM2", "fin_stress": "STLFSI4",
+              "sahm": "SAHMREALTIME", "fed_liq": "WALCL", "infl_be": "T10YIE", "erp": "DFII10"}
 
 
 def _last_close(ticker: str, period="3mo"):
@@ -30,6 +54,9 @@ def _try(label, fn, out):
     try:
         r = fn()
         if r:
+            for k, ind in r.items():
+                if k in _SERIES_OF and _SERIES_OF[k] in _ASOF:
+                    ind["asof"] = _ASOF[_SERIES_OF[k]]   # date de la donnée source
             out.update(r)
     except Exception as e:
         print(f"[extras] {label}: {e}")
@@ -119,6 +146,22 @@ def _breakeven():
         + ("anticipations élevées, favorable aux matières premières et à l'or." if b > 2.6
            else "anticipations basses, peu de soutien pour les matières premières." if b < 1.8
            else "anticipations ancrées près de la cible de 2 %."))}
+
+
+def _erp():
+    """Prime de risque actions façon Shiller : rendement du CAPE (1/CAPE) moins le taux réel 10 ans."""
+    cape = indicators._scrape_cape()
+    tips = _fred("DFII10")
+    if not cape or not tips:
+        return None
+    erp = 100 / cape - tips[0]
+    sig = "buy" if erp > 4 else "sell" if erp < 1.5 else "neutral"
+    return {"erp": _ind(
+        _norm(erp, -1, 6), f"{erp:+.1f} %", "", sig,
+        f"Prime de risque actions à {erp:+.1f} % (rendement CAPE {100/cape:.1f} % − taux réel {tips[0]:.1f} %) — "
+        + ("les actions rémunèrent bien le risque par rapport aux obligations." if erp > 4
+           else "les actions offrent peu de rémunération supplémentaire : valorisation tendue." if erp < 1.5
+           else "rémunération du risque dans la moyenne."))}
 
 
 # ── Sentiment & volatilité ───────────────────────────────────────────────────
@@ -258,7 +301,7 @@ def bourse_extras() -> dict:
     out = {}
     for label, fn in [("courbe des taux", _yield_curve), ("spread HY", _hy_spread),
                       ("stress financier", _fin_stress), ("Sahm", _sahm),
-                      ("liquidité Fed", _fed_liquidity), ("CNN F&G", _cnn_fear_greed),
+                      ("liquidité Fed", _fed_liquidity), ("prime de risque", _erp), ("CNN F&G", _cnn_fear_greed),
                       ("VIX terme", _vix_term), ("SKEW", _skew),
                       ("largeur", _breadth), ("rotation", _rotation)]:
         _try(label, fn, out)
