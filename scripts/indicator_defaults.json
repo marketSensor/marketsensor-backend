@@ -258,31 +258,31 @@
      "id": "mvrv",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "simulated"
     },
     {
      "id": "nupl",
      "w": 3,
      "sig": "neutral",
-     "source": "live"
+     "source": "simulated"
     },
     {
      "id": "sopr",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "simulated"
     },
     {
      "id": "cdd",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "simulated"
     },
     {
      "id": "nvt",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "simulated"
     },
     {
      "id": "hashrate",
@@ -328,7 +328,7 @@
      "id": "puell",
      "w": 2,
      "sig": "neutral",
-     "source": "live"
+     "source": "simulated"
     },
     {
      "id": "mayer",
