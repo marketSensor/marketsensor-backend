@@ -76,7 +76,7 @@
      "id": "fg_spx",
      "w": 3,
      "sig": "neutral",
-     "source": "simulated"
+     "source": "live"
     },
     {
      "id": "putcall",
@@ -233,6 +233,70 @@
    ]
   },
   {
+   "name": "Macro & Crédit",
+   "indicators": [
+    {
+     "id": "yield_curve",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "hy_spread",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "fin_stress",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "sahm",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "fed_liq",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "Largeur & Rotation",
+   "indicators": [
+    {
+     "id": "breadth",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "rotation",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "vix_term",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "skew",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    }
+   ]
+  },
+  {
    "name": "Valorisation",
    "indicators": [
     {
@@ -288,6 +352,29 @@
      "id": "hashrate",
      "w": 2,
      "sig": "buy",
+     "source": "live"
+    }
+   ]
+  },
+  {
+   "name": "On-Chain gratuit & Flux",
+   "indicators": [
+    {
+     "id": "mvrv_ratio",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "ls_ratio",
+     "w": 1,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "stablecoins",
+     "w": 2,
+     "sig": "neutral",
      "source": "live"
     }
    ]
@@ -563,6 +650,18 @@
      "id": "realrates",
      "w": 3,
      "sig": "buy",
+     "source": "live"
+    },
+    {
+     "id": "infl_be",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live"
+    },
+    {
+     "id": "fed_liq",
+     "w": 1,
+     "sig": "neutral",
      "source": "live"
     },
     {
