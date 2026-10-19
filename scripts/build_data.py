@@ -175,6 +175,13 @@ def main() -> int:
     write_json(out / "signals.json", {"ts": iso, **reco, "unavailable": unavailable})
     write_json(out / "state.json", {"backend": backend_state, "browser": browser_state, "last": last, "history": history})
 
+    # 7b. Suivi des vrais résultats : verdict publié + prix du jour, jugé à 1/3/6/12 mois
+    try:
+        import trackrecord
+        trackrecord.update(out, write_json, read_json, iso, reco, history)
+    except Exception as e:
+        print(f"::warning::suivi des résultats : {type(e).__name__}: {e}")
+
     # 8. Assistant analyste (dossier.json + analysis.json) — un échec ne bloque jamais la publication
     try:
         import analyst

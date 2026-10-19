@@ -18,6 +18,7 @@ from pathlib import Path
 import requests
 
 import signal_engine as eng
+from backtest import reliability
 
 DEFAULTS = json.loads(Path(__file__).with_name("indicator_defaults.json").read_text(encoding="utf-8"))
 TAB_LABEL = {"bourse": "Bourse (actions)", "crypto": "Crypto", "matieres": "Matières premières"}
@@ -81,8 +82,7 @@ def _merged(backend: dict, browser: dict, tab: str) -> dict:
     return out
 
 
-def build_dossier(iso, backend, browser, reco, history, events, backtest, analytics, carried) -> dict:
-    bt_ind = (backtest or {}).get("indicators", {})
+def build_dossier(iso, backend, browser, reco, history, events, backtest, analytics, carried, suivi=None) -> dict:
     carried_set = set(carried or [])
     marches = {}
     for tab in eng.TABS:
@@ -96,13 +96,13 @@ def build_dossier(iso, backend, browser, reco, history, events, backtest, analyt
                 if p is None or d["source"] == "simulated" and "sig" not in p:
                     stale.append(d["name"])
                     continue
-                bt = bt_ind.get(d["id"])
+                bt = reliability(backtest, tab, d["id"])
                 row = {"id": d["id"], "nom": d["name"], "groupe": g["name"],
                        "valeur": f"{p.get('raw', '')}{p.get('unit', '') or ''}".strip(),
                        "signal": {"buy": "achat", "sell": "vente", "neutral": "neutre"}[p.get("sig", d["sig"])],
                        "poids": d["w"], "horizon": "court" if d.get("h") == "c" else "long"}
                 if bt:
-                    row["fiabilite_passee"] = bt["verdict"]
+                    row["fiabilite_passee"] = bt
                 if p.get("asof"):
                     row["date_donnee"] = p["asof"]
                 if f"{tab}.{d['id']}" in carried_set:
@@ -127,7 +127,13 @@ def build_dossier(iso, backend, browser, reco, history, events, backtest, analyt
            "dans_jours": e.get("days_from_now"), "importance": e.get("impact") or e.get("importance")}
           for e in (events or []) if e.get("days_from_now", 99) <= 45][:14]
     divs = [d.get("desc") for d in ((analytics or {}).get("divergences") or [])][:8]
-    comp = (backtest or {}).get("composite")
+    tests = {}
+    for key, a_ in ((backtest or {}).get("assets") or {}).items():
+        c = a_.get("composite") or {}
+        tests[key] = {"cible": a_.get("label"), "depuis": a_.get("since"),
+                      "rendement_moyen_pct": a_.get("baseline"),
+                      "vote_composite": {"verdict": c.get("verdict"), "ecart_achat_moins_vente_pct": c.get("edge")}}
+    cal = (backtest or {}).get("calibration") or {}
     return {
         "genere_le": iso,
         "regle_de_decision": "Vote pondéré des indicateurs actualisés : achat si ≥ 45 % du poids est acheteur, "
@@ -135,11 +141,9 @@ def build_dossier(iso, backend, browser, reco, history, events, backtest, analyt
         "marches": marches,
         "calendrier_macro": ev,
         "divergences_detectees": divs,
-        "test_retroactif": {
-            "cible": (backtest or {}).get("target"), "reference_rendement_moyen_pct": (backtest or {}).get("baseline"),
-            "vote_composite": ({"verdict": comp["verdict"], "ecart_achat_moins_vente_pct": comp["edge"]} if comp else None),
-            "limites": (backtest or {}).get("caveat"),
-        },
+        "test_retroactif": {"actifs_testes": tests, "limites": (backtest or {}).get("caveat"),
+                            "calibration_hors_echantillon_meilleure": cal.get("calibration_meilleure_hors_echantillon")},
+        "suivi_reel_du_site": suivi,
         "consignes_chat": CHAT_PROMPT,
     }
 
@@ -280,8 +284,9 @@ def run(out: Path, write_json, iso, backend, browser, reco, history, events, car
         except Exception:
             return {}
 
+    tr = rj("trackrecord.json")
     dossier = build_dossier(iso, backend, browser, reco, history, events, rj("backtest.json"),
-                            rj("analytics.json"), carried)
+                            rj("analytics.json"), carried, tr.get("resume"))
     write_json(out / "dossier.json", dossier)
 
     sigs = {t: {"v": m["verdict"], "c": m["horizons"]["court"]["verdict"], "l": m["horizons"]["long"]["verdict"]}

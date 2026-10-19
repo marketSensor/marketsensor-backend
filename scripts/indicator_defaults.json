@@ -9,7 +9,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "macd_spx",
@@ -17,7 +19,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "stoch",
@@ -25,7 +29,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -38,7 +44,9 @@
      "w": 2,
      "sig": "buy",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm200",
@@ -46,7 +54,9 @@
      "w": 3,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "cross",
@@ -54,7 +64,9 @@
      "w": 2,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -75,7 +87,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "atr",
@@ -83,7 +97,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -125,7 +141,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "macd_cw8",
@@ -133,7 +151,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm50_cw8",
@@ -141,7 +161,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm200_cw8",
@@ -149,7 +171,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "stoch_cw8",
@@ -157,7 +181,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -170,7 +196,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "macd_ese",
@@ -178,7 +206,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm50_ese",
@@ -186,7 +216,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm200_ese",
@@ -194,7 +226,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "stoch_ese",
@@ -202,7 +236,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -215,7 +251,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "macd_paeem",
@@ -223,7 +261,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm50_paeem",
@@ -231,7 +271,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm200_paeem",
@@ -239,7 +281,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "stoch_paeem",
@@ -247,7 +291,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -260,7 +306,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "macd_paasi",
@@ -268,7 +316,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm50_paasi",
@@ -276,7 +326,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "mm200_paasi",
@@ -284,7 +336,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "eq_tech",
+     "fc": 16
     },
     {
      "id": "stoch_paasi",
@@ -292,7 +346,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "eq_tech",
+     "fc": 16
     }
    ]
   },
@@ -305,7 +361,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "macro_stress",
+     "fc": 4
     },
     {
      "id": "hy_spread",
@@ -313,7 +371,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "macro_stress",
+     "fc": 4
     },
     {
      "id": "fin_stress",
@@ -321,7 +381,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "macro_stress",
+     "fc": 4
     },
     {
      "id": "sahm",
@@ -329,7 +391,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "macro_stress",
+     "fc": 4
     },
     {
      "id": "fed_liq",
@@ -387,7 +451,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "valuation",
+     "fc": 5
     },
     {
      "id": "cape",
@@ -395,7 +461,9 @@
      "w": 3,
      "sig": "sell",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "valuation",
+     "fc": 5
     },
     {
      "id": "pe_fwd",
@@ -403,7 +471,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "valuation",
+     "fc": 5
     }
    ]
   }
@@ -595,7 +665,9 @@
      "w": 3,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "halving",
+     "fc": 3
     },
     {
      "id": "days_until_halving",
@@ -603,7 +675,9 @@
      "w": 2,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "halving",
+     "fc": 3
     },
     {
      "id": "cycle_progress",
@@ -611,7 +685,9 @@
      "w": 2,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "halving",
+     "fc": 3
     }
    ]
   },
@@ -624,7 +700,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "btc_tech",
+     "fc": 6
     },
     {
      "id": "btcrsim",
@@ -632,7 +710,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "btc_tech",
+     "fc": 6
     },
     {
      "id": "btcmacd",
@@ -640,7 +720,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "btc_tech",
+     "fc": 6
     },
     {
      "id": "bollinger_btc",
@@ -648,7 +730,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "btc_tech",
+     "fc": 6
     },
     {
      "id": "atr_btc",
@@ -656,7 +740,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "btc_tech",
+     "fc": 6
     },
     {
      "id": "btcsupp",
@@ -664,7 +750,9 @@
      "w": 1,
      "sig": "buy",
      "source": "simulated",
-     "h": "c"
+     "h": "c",
+     "f": "btc_tech",
+     "fc": 6
     }
    ]
   },
@@ -677,7 +765,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "macd_eth",
@@ -685,7 +775,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "mm50_eth",
@@ -693,7 +785,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "mm200_eth",
@@ -701,7 +795,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "bollinger_eth",
@@ -709,7 +805,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "vs_btc_eth",
@@ -717,7 +815,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     }
    ]
   },
@@ -730,7 +830,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "macd_sol",
@@ -738,7 +840,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "mm50_sol",
@@ -746,7 +850,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "mm200_sol",
@@ -754,7 +860,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "bollinger_sol",
@@ -762,7 +870,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "vs_btc_sol",
@@ -770,7 +880,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     }
    ]
   },
@@ -783,7 +895,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "macd_hype",
@@ -791,7 +905,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "mm50_hype",
@@ -799,7 +915,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "bollinger_hype",
@@ -807,7 +925,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     },
     {
      "id": "vs_btc_hype",
@@ -815,7 +935,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "alt_tech",
+     "fc": 10
     }
    ]
   }
@@ -838,7 +960,9 @@
      "w": 3,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "inflation_macro",
+     "fc": 5
     },
     {
      "id": "infl_be",
@@ -846,7 +970,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "inflation_macro",
+     "fc": 5
     },
     {
      "id": "fed_liq",
@@ -862,7 +988,9 @@
      "w": 2,
      "sig": "buy",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "inflation_macro",
+     "fc": 5
     }
    ]
   },
@@ -875,7 +1003,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "macd_gold",
@@ -883,7 +1013,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "mm50_gold",
@@ -891,7 +1023,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "mm200_gold",
@@ -899,7 +1033,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "perf1y_gold",
@@ -907,7 +1043,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "goldsil",
@@ -936,7 +1074,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "macd_silver",
@@ -944,7 +1084,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "mm50_silver",
@@ -952,7 +1094,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "mm200_silver",
@@ -960,7 +1104,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "perf1y_silver",
@@ -968,7 +1114,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     }
    ]
   },
@@ -981,7 +1129,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "macd_wti",
@@ -989,7 +1139,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "mm50_wti",
@@ -997,7 +1149,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "mm200_wti",
@@ -1005,7 +1159,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "perf1y_wti",
@@ -1013,7 +1169,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "rsi_brent",
@@ -1021,7 +1179,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "macd_brent",
@@ -1029,7 +1189,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "mm200_brent",
@@ -1037,7 +1199,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "rsi_ng",
@@ -1045,7 +1209,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "macd_ng",
@@ -1053,7 +1219,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "mm200_ng",
@@ -1061,7 +1229,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "oil",
+     "fc": 8
     },
     {
      "id": "gold_oil_ratio",
@@ -1082,7 +1252,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "macd_ura",
@@ -1090,7 +1262,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "mm200_ura",
@@ -1098,7 +1272,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "perf1y_ura",
@@ -1106,7 +1282,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "rsi_urnm",
@@ -1114,7 +1292,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "macd_urnm",
@@ -1122,7 +1302,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "mm200_urnm",
@@ -1130,7 +1312,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "rsi_ccj",
@@ -1138,7 +1322,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "macd_ccj",
@@ -1146,7 +1332,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "mm200_ccj",
@@ -1154,7 +1342,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "uranium",
+     "fc": 8
     },
     {
      "id": "nuclear",
@@ -1175,7 +1365,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "macd_platinum",
@@ -1183,7 +1375,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "mm200_platinum",
@@ -1191,7 +1385,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "perf1y_platinum",
@@ -1199,7 +1395,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "rsi_palladium",
@@ -1207,7 +1405,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "mm200_palladium",
@@ -1215,7 +1415,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "precious_tech",
+     "fc": 12
     },
     {
      "id": "platpall",
@@ -1236,7 +1438,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "macd_copper",
@@ -1244,7 +1448,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "mm50_copper",
@@ -1252,7 +1458,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "mm200_copper",
@@ -1260,7 +1468,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "perf1y_copper",
@@ -1268,7 +1478,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "rsi_alum",
@@ -1276,7 +1488,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "macd_alum",
@@ -1284,7 +1498,9 @@
      "w": 1,
      "sig": "neutral",
      "source": "live",
-     "h": "c"
+     "h": "c",
+     "f": "industrial_tech",
+     "fc": 8
     },
     {
      "id": "mm200_alum",
@@ -1292,7 +1508,9 @@
      "w": 2,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "industrial_tech",
+     "fc": 8
     }
    ]
   }
