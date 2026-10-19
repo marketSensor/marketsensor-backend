@@ -136,16 +136,24 @@ def browser_signal_patches(src: dict) -> dict:
 
 
 # ── Recommandation (applyPatch + computeReco) ────────────────────
-def _vote(inds):
-    b = s = t = 0
+def effective_weights(inds):
+    """Poids effectifs : le poids cumulé d'une famille d'indicateurs corrélés est plafonné (champ fc)."""
+    fam = {}
     for i in inds:
-        if i["source"] != "live":
-            continue
-        t += i["w"]
+        if i.get("f"):
+            fam[i["f"]] = fam.get(i["f"], 0) + i["w"]
+    return [i["w"] * i["fc"] / fam[i["f"]] if i.get("f") and fam[i["f"]] > i["fc"] else i["w"] for i in inds]
+
+
+def _vote(inds):
+    live = [i for i in inds if i["source"] == "live"]
+    b = s = t = 0.0
+    for i, w in zip(live, effective_weights(live)):
+        t += w
         if i["sig"] == "buy":
-            b += i["w"]
+            b += w
         elif i["sig"] == "sell":
-            s += i["w"]
+            s += w
     bp = js_round(b / t * 100) if t else 0
     sp = js_round(s / t * 100) if t else 0
     return {"sig": "buy" if bp >= 45 else "sell" if sp >= 35 else "neutral", "bp": bp, "sp": sp}
