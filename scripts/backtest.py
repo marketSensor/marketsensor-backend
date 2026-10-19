@@ -27,7 +27,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 
-VERSION = 3               # à incrémenter quand les règles de signaux changent (force le recalcul)
+VERSION = 4               # à incrémenter quand les règles de signaux changent (force le recalcul)
 warnings.filterwarnings("ignore")
 FRED_KEY = os.getenv("FRED_API_KEY", "")
 MIN_STATE_DAYS = 250      # en dessous, l'état n'est pas jugé
