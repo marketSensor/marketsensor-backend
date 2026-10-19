@@ -114,6 +114,11 @@ def _macd_hist(close: pd.Series) -> pd.Series:
     return macd - macd.ewm(span=9, adjust=False).mean()
 
 
+def _spearman(a: pd.Series, b: pd.Series) -> float:
+    """Corrélation de rang (sans scipy) : Pearson sur les rangs."""
+    return a.rank().corr(b.rank())
+
+
 def _sig(series: pd.Series, buy, sell) -> pd.Series:
     """buy / sell : fonctions booléennes sur la série -> +1 / -1 / 0 (NaN conservé)."""
     out = pd.Series(0.0, index=series.index)
@@ -223,7 +228,7 @@ def _calibrate(sigs: dict, close: pd.Series) -> dict:
         w = {}
         for c in df.columns:
             x = pd.DataFrame({"s": df.loc[train, c], "f": fwd3[train]}).dropna()
-            ic = x["s"].corr(x["f"], method="spearman") if len(x) >= 750 else np.nan
+            ic = _spearman(x["s"], x["f"]) if len(x) >= 750 else np.nan
             w[c] = max(0.0, ic) if ic == ic else static_w[c] * 0.0
             ics_last[c] = None if ic != ic else round(float(ic), 3)
         wser = pd.Series(w)
@@ -245,7 +250,7 @@ def _calibrate(sigs: dict, close: pd.Series) -> dict:
     full = {}
     for c in df.columns:
         x = pd.DataFrame({"s": df[c], "f": fwd3}).dropna()
-        full[c] = round(float(x["s"].corr(x["f"], method="spearman")), 3) if len(x) >= 750 else None
+        full[c] = round(float(_spearman(x["s"], x["f"])), 3) if len(x) >= 750 else None
     pos = [v for v in full.values() if v is not None and v > 0]
     top = max(pos) if pos else 0
     suggested = {c: (int(round(3 * max(0, v) / top)) if v is not None and top else None) for c, v in full.items()}
