@@ -30,6 +30,7 @@ def sec_headers() -> dict:
 CLERK_HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36"}
 BRK_CIK = "1067983"
 BUFFETT_REFRESH_H = 12
+BUFFETT_VERSION = 2            # à augmenter quand le contenu de buffett.json change : recalcul immédiat
 PELOSI_REFRESH_H = 6
 PELOSI_YEARS = 3                # année en cours + 2 précédentes
 PARSER_VERSION = 3              # à augmenter quand la lecture des PDF change : les documents sont alors relus
@@ -44,7 +45,8 @@ TICKERS = {
     "DOMINOS PIZZA INC": "DPZ", "POOL CORP": "POOL", "LENNAR CORP": "LEN", "NVR INC": "NVR", "HP INC": "HPQ",
     "CITIGROUP INC": "C", "LOUISIANA PAC CORP": "LPX", "ALLY FINL INC": "ALLY", "T-MOBILE US INC": "TMUS",
     "UNITEDHEALTH GROUP INC": "UNH", "SNOWFLAKE INC": "SNOW", "NU HOLDINGS LTD": "NU", "JEFFERIES FINL GROUP INC": "JEF",
-    "SIRIUS XM HOLDINGS INC": "SIRI", "CELANESE CORP DEL": "CE", "ULTA BEAUTY INC": "ULTA", "SPDR S&P 500 ETF TR": "SPY",
+    "BANK OF AMER CORP": "BAC", "BANK OF AMERICA CORP": "BAC", "CHEVRON CORPORATION": "CVX", "COCA-COLA CO": "KO",
+    "OCCIDENTAL PETROLEUM CORP": "OXY", "ALPHABET INC": "GOOGL", "SIRIUS XM HOLDINGS INC": "SIRI", "CELANESE CORP DEL": "CE", "ULTA BEAUTY INC": "ULTA", "SPDR S&P 500 ETF TR": "SPY",
 }
 
 
@@ -153,12 +155,17 @@ def build_holdings(cur: list[dict], prev: list[dict]) -> dict:
             d = r["shares"] - p["shares"]
             pct = d / p["shares"] * 100 if p["shares"] else 0
             ch = {"type": "hausse" if pct > 1 else "baisse" if pct < -1 else "stable", "pct": round(pct, 1)}
+        price = r["value"] / r["shares"] if r["shares"] else 0
+        dshares = r["shares"] - (p["shares"] if p else 0)
         out.append({"name": r["name"].title(), "ticker": _ticker(r["name"]), "class": r["class"], "value": r["value"],
-                    "shares": r["shares"], "pct": round(r["value"] / total * 100, 2) if total else None, "change": ch})
+                    "shares": r["shares"], "pct": round(r["value"] / total * 100, 2) if total else None, "change": ch,
+                    "delta_shares": dshares, "delta_value": round(dshares * price)})
     cur_set = {r["cusip"] for r in cur}
     sold = [{"name": p["name"].title(), "ticker": _ticker(p["name"]), "value": p["value"]}
             for p in sorted(prev, key=lambda x: -x["value"]) if p["cusip"] not in cur_set]
-    return {"total_value": total, "n_positions": len(out), "holdings": out, "sold_out": sold,
+    bought = sum(h["delta_value"] for h in out if h["delta_value"] > 0)
+    sales = -sum(h["delta_value"] for h in out if h["delta_value"] < 0) + sum(x["value"] for x in sold)
+    return {"flux_estimes": {"achats": bought, "ventes": sales, "net": bought - sales},"total_value": total, "n_positions": len(out), "holdings": out, "sold_out": sold,
             "top5_pct": round(sum(h["pct"] or 0 for h in out[:5]), 1), "top10_pct": round(sum(h["pct"] or 0 for h in out[:10]), 1)}
 
 
@@ -183,11 +190,37 @@ def _cash():
             if not pts:
                 continue
             last = max(pts, key=lambda x: (x["end"], x.get("filed", "")))
+            if (date.today() - date.fromisoformat(last["end"])).days > 200:
+                continue                                    # étiquette abandonnée par Berkshire : donnée périmée
             cand = {"tag": f"{ns}:{tag}", "end": last["end"], "val": last["val"]}
             if kind not in found or cand["end"] > found[kind]["end"] or (cand["end"] == found[kind]["end"] and cand["val"] > found[kind]["val"]):
                 found[kind] = cand
     print(f"[buffett] trésorerie : { {k: (v['tag'], v['end'], round(v['val'] / 1e9, 1)) for k, v in found.items()} }")
     return found or None
+
+
+def _probe_10q(sub: dict):
+    """Diagnostic : lignes pertinentes des états financiers du dernier 10-Q/10-K (trésorerie, ventes d'actions)."""
+    from bs4 import BeautifulSoup
+    r = sub["filings"]["recent"]
+    reps = sorted([(d, a) for a, f, d in zip(r["accessionNumber"], r["form"], r["filingDate"]) if f in ("10-Q", "10-K")], reverse=True)
+    if not reps:
+        return
+    filed, acc = reps[0]
+    base = f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/{acc.replace('-', '')}/"
+    print(f"[buffett] comptes {acc} déposés le {filed}")
+    for n in range(2, 9):
+        try:
+            soup = BeautifulSoup(_get(f"{base}R{n}.htm", sec_headers(), tries=1).text, "html.parser")
+        except Exception as e:
+            print(f"[buffett] R{n}: {type(e).__name__}")
+            continue
+        title = (soup.find("th") or soup.find("td")).get_text(" ", strip=True)[:70] if soup.find(["th", "td"]) else "?"
+        print(f"[buffett] R{n}: {title}")
+        for tr in soup.find_all("tr"):
+            cells = [c.get_text(" ", strip=True) for c in tr.find_all(["td", "th"])]
+            if cells and re.search(r"cash|treasury|short-term|equity securities|investments in", cells[0], re.I):
+                print(f"[buffett]   R{n} | {' | '.join(cells[:4])[:230]}")
 
 
 def _buffett_indicator():
@@ -203,7 +236,7 @@ def _buffett_indicator():
 def update_buffett(out, write_json, read_json):
     path = out / "buffett.json"
     prev_file = read_json(path, {})
-    if prev_file.get("holdings") and _age_hours(prev_file.get("generated")) < BUFFETT_REFRESH_H:
+    if prev_file.get("holdings") and prev_file.get("version") == BUFFETT_VERSION and _age_hours(prev_file.get("generated")) < BUFFETT_REFRESH_H:
         print("[buffett] données récentes : conservées")
         return
     try:
@@ -212,7 +245,7 @@ def update_buffett(out, write_json, read_json):
         if len(filings) < 2:
             raise RuntimeError(f"moins de 2 déclarations 13F trouvées ({len(filings)})")
         new, old = filings[0], filings[1]
-        if prev_file.get("filing", {}).get("accession") == new["acc"] and prev_file.get("holdings"):
+        if prev_file.get("filing", {}).get("accession") == new["acc"] and prev_file.get("holdings") and prev_file.get("version") == BUFFETT_VERSION:
             data = prev_file                              # même trimestre : on ne retélécharge pas les positions
         else:
             cur, prv = _fetch_holdings(new["acc"]), _fetch_holdings(old["acc"])
@@ -220,7 +253,11 @@ def update_buffett(out, write_json, read_json):
                     "filing": {"accession": new["acc"], "filed": new["filed"], "period": new["period"],
                                "url": f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/{new['acc'].replace('-', '')}/"},
                     "previous": {"period": old["period"], "filed": old["filed"]}}
-        data["generated"] = _now_iso()
+        data["generated"], data["version"] = _now_iso(), BUFFETT_VERSION
+        try:
+            _probe_10q(sub)
+        except Exception as e:
+            print(f"[buffett] lecture des comptes : {type(e).__name__}: {e}")
         try:
             data["cash"] = _cash() or prev_file.get("cash")
         except Exception as e:
