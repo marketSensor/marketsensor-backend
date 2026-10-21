@@ -295,6 +295,91 @@ def _stablecoins():
            else "offre stable, pas de flux notable."))}
 
 
+# ── Bitcoin on-chain complémentaire (Coin Metrics communauté : capitalisation, MVRV, émission) ─────────────
+
+CM_URL = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
+
+
+def _cm_rows(metrics: str, start: str):
+    """Toutes les lignes journalières (pagination suivie) pour BTC."""
+    rows, url, params = [], CM_URL, {"assets": "btc", "metrics": metrics, "frequency": "1d",
+                                     "start_time": start, "page_size": 10000}
+    for _ in range(5):
+        r = requests.get(url, params=params, timeout=TIMEOUT + 20, headers=HEADERS)
+        j = r.json()
+        rows += j.get("data", [])
+        nxt = j.get("next_page_url")
+        if not nxt:
+            break
+        url, params = nxt, None
+    return rows
+
+
+def _btc_valuation():
+    """MVRV Z-Score et NUPL, déduits de la capitalisation et du MVRV (capitalisation réalisée = cap / MVRV)."""
+    import numpy as np
+    rows = _cm_rows("CapMrktCurUSD,CapMVRVCur", "2011-01-01")
+    pts = [(float(x["CapMrktCurUSD"]), float(x["CapMVRVCur"])) for x in rows
+           if x.get("CapMrktCurUSD") and x.get("CapMVRVCur")]
+    if len(pts) < 1000:
+        return None
+    mc = np.array([p[0] for p in pts]); mvrv = np.array([p[1] for p in pts])
+    realized = mc / mvrv
+    z = float((mc[-1] - realized[-1]) / mc.std())
+    nupl = float(1 - 1 / mvrv[-1])
+    out = {}
+    zs = "sell" if z >= 6 else "buy" if z <= 0.5 else "neutral"
+    out["mvrv"] = _ind(
+        _norm(z, -1, 8), f"{z:.2f}", "", zs,
+        f"MVRV Z-Score à {z:.2f} (capitalisation vs capitalisation réalisée, Coin Metrics) — "
+        + ("zone de sommet de cycle historique (≥ 6)." if z >= 6
+           else "zone d'accumulation historique (≤ 0,5) : le marché vaut à peine son coût d'acquisition." if z <= 0.5
+           else "zone intermédiaire, sans excès."))
+    ns = "sell" if nupl >= 0.7 else "buy" if nupl <= 0.1 else "neutral"
+    out["nupl"] = _ind(
+        _norm(nupl, -0.2, 0.8), f"{nupl:.2f}", "", ns,
+        f"NUPL à {nupl:.2f} (profit latent net des détenteurs) — "
+        + ("euphorie : la plupart des détenteurs sont en gros profit, risque de sommet." if nupl >= 0.7
+           else "capitulation ou découragement : peu de profits latents, zone d'achat historique." if nupl <= 0.1
+           else "zone intermédiaire (espoir à optimisme)."))
+    return out
+
+
+def _btc_puell():
+    """Puell Multiple : émission quotidienne de bitcoins (en $) / sa moyenne sur 365 jours."""
+    import datetime as dt
+    start = (dt.date.today() - dt.timedelta(days=420)).isoformat()
+    vals = [float(x["IssTotUSD"]) for x in _cm_rows("IssTotUSD", start) if x.get("IssTotUSD")]
+    if len(vals) < 366:
+        return None
+    p = vals[-1] / (sum(vals[-365:]) / 365)
+    sig = "sell" if p >= 2.5 else "buy" if p <= 0.6 else "neutral"
+    return {"puell": _ind(
+        _norm(p, 0.3, 3), f"{p:.2f}", "", sig,
+        f"Puell Multiple à {p:.2f} (revenus des mineurs vs moyenne 1 an, Coin Metrics) — "
+        + ("revenus des mineurs très élevés : zone de sommet historique." if p >= 2.5
+           else "revenus des mineurs au plus bas : capitulation des mineurs, zone d'achat historique." if p <= 0.6
+           else "revenus des mineurs dans la norme."))}
+
+
+def _btc_support():
+    """Position du cours dans sa fourchette 180 jours : près du plus bas = support proche (risque limité)."""
+    h = yf.Ticker("BTC-USD").history(period="1y")
+    if len(h) < 200:
+        return None
+    lo, hi, px = float(h["Low"].iloc[-180:].min()), float(h["High"].iloc[-180:].max()), float(h["Close"].iloc[-1])
+    if hi <= lo:
+        return None
+    r = (px - lo) / (hi - lo)
+    sig = "buy" if r < 0.25 else "sell" if r > 0.9 else "neutral"
+    return {"btcsupp": _ind(
+        _norm(r * 100, 0, 100), f"{r*100:.0f} % de la fourchette", "", sig,
+        f"Bitcoin à {r*100:.0f} % de sa fourchette 180 jours ({lo:,.0f} – {hi:,.0f} $) — ".replace(",", " ")
+        + ("proche de son support : le risque à la baisse est limité." if r < 0.25
+           else "collé à sa résistance : peu de marge avant le haut de fourchette." if r > 0.9
+           else "milieu de fourchette, ni support ni résistance proche."))}
+
+
 # ── Solana & Hyperliquid (DefiLlama + API publique Hyperliquid, sans clé) ────
 
 HL_URL = "https://api.hyperliquid.xyz/info"
@@ -455,6 +540,7 @@ def crypto_extras() -> dict:
     out = {}
     for label, fn in [("MVRV", _mvrv_ratio), ("OKX long/short", _okx_long_short),
                       ("stablecoins", _stablecoins),
+                      ("BTC MVRV Z/NUPL", _btc_valuation), ("BTC Puell", _btc_puell), ("BTC support", _btc_support),
                       ("SOL TVL", _sol_tvl), ("SOL DEX", _sol_dex), ("SOL stablecoins", _sol_stable),
                       ("SOL funding", _sol_funding), ("HYPE funding", _hype_funding),
                       ("HYPE revenus", _hype_rev), ("HYPE TVL", _hype_tvl)]:

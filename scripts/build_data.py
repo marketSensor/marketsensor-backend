@@ -175,10 +175,20 @@ def main() -> int:
     write_json(out / "signals.json", {"ts": iso, **reco, "unavailable": unavailable})
     write_json(out / "state.json", {"backend": backend_state, "browser": browser_state, "last": last, "history": history})
 
+    assets = eng.compute_assets([backend, browser])     # verdicts propres à ETH / SOL / HYPE
+
+    # 7a. Niveaux de prix indicatifs (supports, résistances, MM, volatilité)
+    levels = {}
+    try:
+        import levels as levels_mod
+        levels = levels_mod.update(out, write_json, iso)
+    except Exception as e:
+        print(f"::warning::niveaux de prix : {type(e).__name__}: {e}")
+
     # 7b. Suivi des vrais résultats : verdict publié + prix du jour, jugé à 1/3/6/12 mois
     try:
         import trackrecord
-        trackrecord.update(out, write_json, read_json, iso, reco, history)
+        trackrecord.update(out, write_json, read_json, iso, {**reco, **assets}, history)
     except Exception as e:
         print(f"::warning::suivi des résultats : {type(e).__name__}: {e}")
 
@@ -186,7 +196,7 @@ def main() -> int:
     try:
         import analyst
         analyst.run(out, write_json, iso, backend, browser, reco, history, events, carried,
-                    assets=eng.compute_assets([backend, browser]))
+                    assets=assets)
     except Exception as e:
         print(f"::warning::assistant analyste : {type(e).__name__}: {e}")
 
