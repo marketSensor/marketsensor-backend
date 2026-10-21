@@ -258,8 +258,15 @@ def _accounts(sub: dict):
 def _buffett_indicator():
     """Valeur de marché des actions américaines (Fed, flux Z.1) rapportée au PIB : repère de valorisation globale."""
     import indicators
-    eq = indicators._fred("NCBEILQ027S", 4)       # millions de $ (le dernier point est parfois vide : on en lit plusieurs)
-    gdp = indicators._fred("GDP", 4)              # milliards de $
+    def fred(series):                              # FRED renvoie parfois une réponse vide : nouvelles tentatives
+        for n in range(4):
+            v = indicators._fred(series, 4)        # le dernier point est parfois vide : on en lit plusieurs
+            if v:
+                return v
+            time.sleep(4 * (n + 1))
+        return None
+    eq = fred("NCBEILQ027S")                       # millions de $
+    gdp = fred("GDP")                              # milliards de $
     if not eq or not gdp:
         return None
     return round(eq[0] / 1000 / gdp[0] * 100, 0)
@@ -268,7 +275,8 @@ def _buffett_indicator():
 def update_buffett(out, write_json, read_json):
     path = out / "buffett.json"
     prev_file = read_json(path, {})
-    if prev_file.get("holdings") and prev_file.get("version") == BUFFETT_VERSION and _age_hours(prev_file.get("generated")) < BUFFETT_REFRESH_H:
+    if prev_file.get("holdings") and prev_file.get("version") == BUFFETT_VERSION \
+            and prev_file.get("buffett_indicator") is not None and _age_hours(prev_file.get("generated")) < BUFFETT_REFRESH_H:
         print("[buffett] données récentes : conservées")
         return
     try:
@@ -293,9 +301,10 @@ def update_buffett(out, write_json, read_json):
             print(f"[buffett] comptes indisponibles : {type(e).__name__}: {e}")
             data["comptes"] = prev_file.get("comptes")
         try:
-            data["buffett_indicator"] = _buffett_indicator()
+            data["buffett_indicator"] = _buffett_indicator() or prev_file.get("buffett_indicator")
         except Exception as e:
             print(f"[buffett] indicateur de Buffett : {e}")
+            data["buffett_indicator"] = prev_file.get("buffett_indicator")
         write_json(path, data)
         print(f"[buffett] {data['n_positions']} positions, {data['total_value'] / 1e9:.0f} Md$, trimestre {data['filing']['period']}")
     except Exception as e:
