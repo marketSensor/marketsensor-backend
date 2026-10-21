@@ -30,7 +30,7 @@ def sec_headers() -> dict:
 CLERK_HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36"}
 BRK_CIK = "1067983"
 BUFFETT_REFRESH_H = 12
-BUFFETT_VERSION = 2            # à augmenter quand le contenu de buffett.json change : recalcul immédiat
+BUFFETT_VERSION = 3            # à augmenter quand le contenu de buffett.json change : recalcul immédiat
 PELOSI_REFRESH_H = 6
 PELOSI_YEARS = 3                # année en cours + 2 précédentes
 PARSER_VERSION = 3              # à augmenter quand la lecture des PDF change : les documents sont alors relus
@@ -169,65 +169,97 @@ def build_holdings(cur: list[dict], prev: list[dict]) -> dict:
             "top5_pct": round(sum(h["pct"] or 0 for h in out[:5]), 1), "top10_pct": round(sum(h["pct"] or 0 for h in out[:10]), 1)}
 
 
-def _cash():
-    """Trésorerie de Berkshire (comptes trimestriels, XBRL SEC). Meilleur effort : composantes affichées séparément."""
-    j = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{BRK_CIK.zfill(10)}.json", sec_headers(), timeout=90).json()
-    found = {}
-    for ns, tags in j.get("facts", {}).items():
-        for tag, body in tags.items():
-            usd = (body.get("units") or {}).get("USD")
-            if not usd:
-                continue
-            label = f"{tag} {body.get('label', '')}"
-            kind = None
-            if tag == "CashAndCashEquivalentsAtCarryingValue":
-                kind = "cash"
-            elif re.search(r"treasury", label, re.I) and re.search(r"bill|short", label, re.I) and not re.search(r"stock|shares|repurchase|interest|income|gain|unrealized", label, re.I):
-                kind = "tbills"
-            if not kind:
-                continue
-            pts = [x for x in usd if x.get("form") in ("10-Q", "10-K") and x.get("end") and "start" not in x]
-            if not pts:
-                continue
-            last = max(pts, key=lambda x: (x["end"], x.get("filed", "")))
-            if (date.today() - date.fromisoformat(last["end"])).days > 200:
-                continue                                    # étiquette abandonnée par Berkshire : donnée périmée
-            cand = {"tag": f"{ns}:{tag}", "end": last["end"], "val": last["val"]}
-            if kind not in found or cand["end"] > found[kind]["end"] or (cand["end"] == found[kind]["end"] and cand["val"] > found[kind]["val"]):
-                found[kind] = cand
-    print(f"[buffett] trésorerie : { {k: (v['tag'], v['end'], round(v['val'] / 1e9, 1)) for k, v in found.items()} }")
-    return found or None
+def _num(txt: str):
+    t = txt.replace("$", "").replace(" ", "").strip()
+    if not re.fullmatch(r"\(?-?[\d,]+(?:\.\d+)?\)?", t):
+        return None
+    neg = t.startswith("(") or t.startswith("-")
+    try:
+        v = float(t.strip("()-").replace(",", ""))
+    except ValueError:
+        return None
+    return -v if neg else v
 
 
-def _probe_10q(sub: dict):
-    """Diagnostic : lignes pertinentes des états financiers du dernier 10-Q/10-K (trésorerie, ventes d'actions)."""
+def _statement(base: str, kind: str):
+    """Trouve et lit l'état financier (R2..R10) dont le titre contient `kind` -> (titre, [(libellé, [nombres])])."""
     from bs4 import BeautifulSoup
-    r = sub["filings"]["recent"]
-    reps = sorted([(d, a) for a, f, d in zip(r["accessionNumber"], r["form"], r["filingDate"]) if f in ("10-Q", "10-K")], reverse=True)
-    if not reps:
-        return
-    filed, acc = reps[0]
-    base = f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/{acc.replace('-', '')}/"
-    print(f"[buffett] comptes {acc} déposés le {filed}")
-    for n in range(2, 9):
+    for n in range(2, 11):
         try:
             soup = BeautifulSoup(_get(f"{base}R{n}.htm", sec_headers(), tries=1).text, "html.parser")
-        except Exception as e:
-            print(f"[buffett] R{n}: {type(e).__name__}")
+        except Exception:
             continue
-        title = (soup.find("th") or soup.find("td")).get_text(" ", strip=True)[:70] if soup.find(["th", "td"]) else "?"
-        print(f"[buffett] R{n}: {title}")
-        for tr in soup.find_all("tr"):
-            cells = [c.get_text(" ", strip=True) for c in tr.find_all(["td", "th"])]
-            if cells and re.search(r"cash|treasury|short-term|equity securities|investments in", cells[0], re.I):
-                print(f"[buffett]   R{n} | {' | '.join(cells[:4])[:230]}")
+        tr0 = soup.find("tr")
+        title = " ".join(c.get_text(" ", strip=True) for c in tr0.find_all(["th", "td"])) if tr0 else ""   # titre + en-têtes de colonnes
+        if kind.lower() in title.lower() and "parenthetical" not in title.lower():
+            mult = 1e6 if "in millions" in title.lower() else 1e3 if "in thousands" in title.lower() else 1.0
+            rows = []
+            for tr in soup.find_all("tr"):
+                cells = [c.get_text(" ", strip=True) for c in tr.find_all(["td", "th"])]
+                if not cells:
+                    continue
+                nums = [v for v in (_num(c) for c in cells[1:] if not re.fullmatch(r"\[\d+\]", c)) if v is not None]
+                rows.append((cells[0], [v * mult for v in nums]))
+            return title, rows
+    return None, []
+
+
+def _ytd_flows(base: str):
+    """Achats / ventes d'actions et rachats d'actions propres depuis le début de l'exercice (tableau des flux de trésorerie)."""
+    title, rows = _statement(base, "Cash Flows")
+    if not rows:
+        return None
+    mm = re.search(r"(\d+)\s+Months Ended", title or "", re.I)
+    months = int(mm.group(1)) if mm else None
+    get = lambda lbl: next((v for l, v in rows if l.strip().lower() == lbl.lower() and v), [None, None])
+    buy, sell, buyback = get("Purchases of equity securities"), get("Sales of equity securities"), get("Acquisitions of treasury stock")
+    if buy[0] is None and sell[0] is None:
+        return None
+    one = lambda v, i: abs(v[i]) if len(v) > i and v[i] is not None else None
+    return {"months": months,
+            "cur": {"achats": one(buy, 0), "ventes": one(sell, 0), "rachats": one(buyback, 0)},
+            "prior": {"achats": one(buy, 1), "ventes": one(sell, 1), "rachats": one(buyback, 1)}}
+
+
+def _accounts(sub: dict):
+    """Liquidités et flux d'actions exacts, lus dans les états financiers du dernier 10-Q / 10-K de Berkshire."""
+    r = sub["filings"]["recent"]
+    reps = sorted([(d, a, rp) for a, f, d, rp in zip(r["accessionNumber"], r["form"], r["filingDate"], r["reportDate"])
+                   if f in ("10-Q", "10-K")], reverse=True)
+    if not reps:
+        return None
+    filed, acc, period = reps[0]
+    base = lambda a: f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/{a.replace('-', '')}/"
+    _, bs = _statement(base(acc), "Balance Sheets")
+    cash_rows = [v[0] for l, v in bs if l.strip().lower() == "cash and cash equivalents" and v]
+    cash_prev = [v[1] for l, v in bs if l.strip().lower() == "cash and cash equivalents" and len(v) > 1]
+    tb = next(((v[0], v[1] if len(v) > 1 else None) for l, v in bs
+               if l.lower().startswith("short-term investments in u.s. treasury bills") and v), None)
+    out = {"periode": period, "depose": filed, "accession": acc, "url": base(acc)}
+    if cash_rows and tb:
+        cash, tbills = sum(cash_rows), tb[0]
+        out.update({"tresorerie": cash, "bons_du_tresor": tbills, "liquidites_total": cash + tbills,
+                    "liquidites_debut_annee": (sum(cash_prev) + tb[1]) if tb[1] and cash_prev else None})
+    else:
+        print(f"[buffett] bilan non reconnu : {len(bs)} lignes, trésorerie={cash_rows}, bons={tb}")
+    cf = _ytd_flows(base(acc))
+    if cf:
+        flows = {"depuis_debut_annee": {"mois": cf["months"], **cf["cur"]}, "meme_periode_annee_precedente": cf["prior"]}
+        if cf["months"] and cf["months"] > 3 and len(reps) > 1:           # trimestre seul = cumul actuel − cumul précédent
+            pf = _ytd_flows(base(reps[1][1]))
+            if pf and pf["months"] == cf["months"] - 3:
+                flows["trimestre"] = {k: (cf["cur"][k] - pf["cur"][k]) if cf["cur"].get(k) is not None and pf["cur"].get(k) is not None else None
+                                      for k in ("achats", "ventes", "rachats")}
+        out["flux_actions"] = flows
+    print(f"[buffett] comptes {period} : liquidités {out.get('liquidites_total')}, flux {out.get('flux_actions')}")
+    return out
 
 
 def _buffett_indicator():
     """Valeur de marché des actions américaines (Fed, flux Z.1) rapportée au PIB : repère de valorisation globale."""
     import indicators
-    eq = indicators._fred("NCBEILQ027S")          # millions de $
-    gdp = indicators._fred("GDP")                 # milliards de $
+    eq = indicators._fred("NCBEILQ027S", 4)       # millions de $ (le dernier point est parfois vide : on en lit plusieurs)
+    gdp = indicators._fred("GDP", 4)              # milliards de $
     if not eq or not gdp:
         return None
     return round(eq[0] / 1000 / gdp[0] * 100, 0)
@@ -254,15 +286,12 @@ def update_buffett(out, write_json, read_json):
                                "url": f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/{new['acc'].replace('-', '')}/"},
                     "previous": {"period": old["period"], "filed": old["filed"]}}
         data["generated"], data["version"] = _now_iso(), BUFFETT_VERSION
+        data.pop("cash", None)
         try:
-            _probe_10q(sub)
+            data["comptes"] = _accounts(sub) or prev_file.get("comptes")
         except Exception as e:
-            print(f"[buffett] lecture des comptes : {type(e).__name__}: {e}")
-        try:
-            data["cash"] = _cash() or prev_file.get("cash")
-        except Exception as e:
-            print(f"[buffett] trésorerie indisponible : {type(e).__name__}: {e}")
-            data["cash"] = prev_file.get("cash")
+            print(f"[buffett] comptes indisponibles : {type(e).__name__}: {e}")
+            data["comptes"] = prev_file.get("comptes")
         try:
             data["buffett_indicator"] = _buffett_indicator()
         except Exception as e:
