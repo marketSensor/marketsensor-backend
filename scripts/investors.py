@@ -25,7 +25,7 @@ BRK_CIK = "1067983"
 BUFFETT_REFRESH_H = 12
 PELOSI_REFRESH_H = 6
 PELOSI_YEARS = 3                # année en cours + 2 précédentes
-PARSER_VERSION = 2              # à augmenter quand la lecture des PDF change : les documents sont alors relus
+PARSER_VERSION = 3              # à augmenter quand la lecture des PDF change : les documents sont alors relus
 PELOSI_MAX_NEW_PDF = 30         # PDF analysés par exécution (le reste suit aux exécutions suivantes)
 
 # Correspondance nom d'émetteur (13F) -> symbole, pour les positions connues (sinon on affiche seulement le nom)
@@ -50,6 +50,18 @@ def _age_hours(iso):
         return (datetime.now(timezone.utc) - datetime.fromisoformat(iso.replace("Z", "+00:00"))).total_seconds() / 3600
     except Exception:
         return 1e9
+
+
+def _sec_probe():
+    """Diagnostic : quelles adresses de la SEC répondent depuis ce serveur (publié dans diagnostics.json)."""
+    for url in (f"https://data.sec.gov/submissions/CIK{BRK_CIK.zfill(10)}.json",
+                f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={BRK_CIK}&type=13F-HR&dateb=&owner=include&count=10&output=atom",
+                f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/"):
+        try:
+            r = requests.get(url, headers=SEC_HEADERS, timeout=30)
+            print(f"[buffett] sonde {url.split('/')[2]}{url[url.index('/', 8):][:60]} -> {r.status_code} {re.sub(chr(10), ' ', r.text[:120])}")
+        except Exception as e:
+            print(f"[buffett] sonde {url[:70]} -> {type(e).__name__}: {e}")
 
 
 def _get(url, headers, timeout=40, tries=3, **kw):
@@ -227,6 +239,7 @@ def update_buffett(out, write_json, read_json):
         print(f"[buffett] {data['n_positions']} positions, {data['total_value'] / 1e9:.0f} Md$, trimestre {data['filing']['period']}")
     except Exception as e:
         print(f"::warning::Buffett : {type(e).__name__}: {e} (fichier précédent conservé)")
+        _sec_probe()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -290,19 +303,56 @@ def _trade(doc, filed, owner, asset_raw, ttype, d1, d2, amt):
             "description": desc[:300] if desc else None, "option": opt}
 
 
+MERGED_RE = re.compile(r"\b(?P<tt>S \(partial\)|P|S|E)\s+(?P<d1>\d{2}/\d{2}/\d{4})\s+(?P<d2>\d{2}/\d{2}/\d{4})\s+"
+                       r"(?P<lo>Over\s+\$[\d,]+|\$[\d,]+)(?P<dash>\s*-)?", re.I)
+
+
+def _parse_merged(cell, doc, filed):
+    """Ligne dont toute la transaction est dans une seule cellule (cas fréquent dans les PDF réels)."""
+    text = re.sub(r"[\x00-\x08\x0b-\x1f]", "", cell or "")
+    m = MERGED_RE.search(text)
+    if not m:
+        return None
+    before = text[:m.start()].strip()
+    rest = text[m.end():]
+    mm = re.search(r"\n\s*F\s*S\s*:", rest)
+    body, tail = (rest[:mm.start()], rest[mm.start():]) if mm else (rest, "")
+    amt = m.group("lo")
+    if m.group("dash"):
+        mh = re.search(r"\$[\d,]+", body)
+        if mh:
+            amt = f"{amt} - {mh.group(0)}"
+            body = body[:mh.start()] + body[mh.end():]
+    owner = ""
+    mo = re.match(r"^(SP|DC|JT)\s+", before)
+    if mo:
+        owner, before = mo.group(1), before[mo.end():]
+    asset = re.sub(r"\s+", " ", f"{before} {body}").strip()
+    md = re.search(r"D\s*:\s*(.+)$", tail, re.S)
+    raw = asset + (f"\nD: {md.group(1).strip()}" if md else "")
+    if not re.search(r"\[[A-Z]{2}\]|\([A-Z]", asset) and len(asset) < 3:
+        return None
+    return _trade(doc, filed, owner, raw, m.group("tt"), m.group("d1"), m.group("d2"), amt)
+
+
 def parse_ptr_tables(tables, doc, filed):
     out = []
     amt_full = re.compile(r"^(?:Over\s+\$[\d,]+|\$[\d,]+(?:\s*-\s*\$[\d,]+)?)$", re.I)
     for tb in tables or []:
         for row in tb:
-            cells = [re.sub(r"\s+", " ", (c or "")).strip() for c in row]
+            cells = [re.sub(r"\s+", " ", re.sub(r"[\x00-\x08\x0b-\x1f]", "", c or "")).strip() for c in row]
             dates = [c for c in cells if DATE_RE.match(c)]
             if len(dates) < 2:
+                one = [c for c in row if c and MERGED_RE.search(re.sub(r"[\x00-\x08\x0b-\x1f]", "", c))]
+                if one:
+                    t = _parse_merged(one[0], doc, filed)
+                    if t:
+                        out.append(t)
                 continue
             ttype = next((c for c in cells if re.fullmatch(r"(?i)P|S|E|S \(partial\)", c)), None)
             amt = next((c for c in cells if amt_full.match(c)), None)
             owner = next((c for c in cells if c in ("SP", "DC", "JT")), "")
-            rest = [(c, raw) for c, raw in zip(cells, [(x or "") for x in row])
+            rest = [(c, re.sub(r"[\x00-\x08\x0b-\x1f]", "", raw)) for c, raw in zip(cells, [(x or "") for x in row])
                     if c and c not in (ttype, amt, owner) and not DATE_RE.match(c)]
             tagged = [r for r in rest if re.search(r"\[[A-Z]{2}\]", r[0])]
             asset = (tagged or sorted(rest, key=lambda r: -len(r[0])))[0][1] if rest else None   # texte brut : conserve les retours à la ligne
