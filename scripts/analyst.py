@@ -59,10 +59,22 @@ Réponds par UN SEUL objet JSON valide (sans texte autour, sans balises), de for
    "indicateurs_cles": ["ids des 5 à 8 indicateurs décisifs"]
   }
  },
+ "actifs_crypto": {
+  "sol|hype": {
+   "decision": "acheter | renforcer_progressivement | attendre | alleger | vendre",
+   "confiance": "faible | moderee | forte",
+   "resume": "3 à 5 phrases : la situation de CET actif (technique + on-chain + positionnement à levier), pas de la crypto en général",
+   "achat_si": ["2 à 3 conditions précises, chiffrées avec les indicateurs du dossier, qui rendraient l'achat pertinent"],
+   "vente_si": ["2 à 3 conditions précises qui justifieraient d'alléger ou de vendre"],
+   "risques": ["2 à 3 puces spécifiques à l'actif"]
+  }
+ },
  "qualite_des_donnees": "2 à 3 phrases : couverture, données anciennes ou manquantes, limites",
  "avertissement": "1 phrase"
 }
-Les trois clés bourse, crypto, matieres sont obligatoires."""
+Les trois clés bourse, crypto, matieres sont obligatoires, ainsi que sol et hype dans actifs_crypto.
+
+Consignes pour actifs_crypto : le dossier contient `actifs_crypto` (verdict propre à Solana et à Hyperliquid) et, dans `marches.crypto.indicateurs`, les indicateurs de ces actifs (groupes « Solana (SOL) » et « Hyperliquid (HYPE) »). Ce sont des actifs très volatils et récents : les indicateurs on-chain (capitaux déposés, volume, stablecoins, revenus) montrent si l'argent entre ou sort ; le funding mesure le levier des traders (contrariant : trop élevé = risque de purge). Ces indicateurs on-chain n'ont PAS été testés rétroactivement : dis-le, et reste prudent. Le verdict de l'actif ne doit pas être recopié du verdict global crypto (dominé par Bitcoin). Taille de position réduite et étalement systématiques pour ces actifs."""
 
 
 PERSONA = SYSTEM_PROMPT.split("Réponds par UN SEUL objet JSON")[0].rstrip()
@@ -83,7 +95,7 @@ def _merged(backend: dict, browser: dict, tab: str) -> dict:
     return out
 
 
-def build_dossier(iso, backend, browser, reco, history, events, backtest, analytics, carried, suivi=None) -> dict:
+def build_dossier(iso, backend, browser, reco, history, events, backtest, analytics, carried, suivi=None, assets=None) -> dict:
     carried_set = set(carried or [])
     marches = {}
     for tab in eng.TABS:
@@ -140,6 +152,10 @@ def build_dossier(iso, backend, browser, reco, history, events, backtest, analyt
         "regle_de_decision": "Vote pondéré des indicateurs actualisés : achat si ≥ 45 % du poids est acheteur, "
                              "vente si ≥ 35 % est vendeur, sinon attendre. Court terme = momentum/sentiment, long terme = tendance/valorisation/macro.",
         "marches": marches,
+        "actifs_crypto": {k: {"actif": a["label"], "verdict": a["sig"], "achat_pct": a["bp"], "vente_pct": a["sp"],
+                              "court_terme": a["horizons"]["c"]["sig"], "long_terme": a["horizons"]["l"]["sig"],
+                              "indicateurs": a["ids"]}
+                          for k, a in (assets or {}).items()},
         "calendrier_macro": ev,
         "divergences_detectees": divs,
         "test_retroactif": {"actifs_testes": tests, "limites": (backtest or {}).get("caveat"),
@@ -217,10 +233,33 @@ def rules_analysis(dossier: dict) -> dict:
             "indicateurs_cles": key,
         }
         notes.append(f"{TAB_LABEL[tab]} : {DECISION_LABEL[dec].lower()}")
-    return {"synthese_globale": "Analyse automatique à règles (sans IA) — " + " · ".join(notes) + ".",
-            "marches": out,
-            "qualite_des_donnees": "Analyse calculée directement à partir du vote pondéré ; elle ne lit pas les nuances entre indicateurs.",
-            "avertissement": "Analyse générale, sans prise en compte de votre situation personnelle ; aucune garantie de résultat."}
+    actifs = {}
+    ind_by_id = {i["id"]: i for i in (dossier["marches"].get("crypto") or {}).get("indicateurs", [])}
+    for k, a in (dossier.get("actifs_crypto") or {}).items():
+        if k not in ("sol", "hype"):
+            continue
+        r_all = {"verdict": a["verdict"]}
+        dec, why = _decision(r_all, {"verdict": a["court_terme"]}, {"verdict": a["long_terme"]})
+        rows = [ind_by_id[i] for i in a["indicateurs"] if i in ind_by_id]
+        pros = [f"{r['nom']} : {r['valeur']}" for r in rows if r["signal"] == "achat"][:4]
+        cons = [f"{r['nom']} : {r['valeur']}" for r in rows if r["signal"] == "vente"][:4]
+        name = a["actif"]
+        actifs[k] = {
+            "decision": dec, "confiance": "faible",
+            "resume": (f"{why} {name} : {a['achat_pct']} % achat / {a['vente_pct']} % vente ; court terme : {FR[a['court_terme']]}, "
+                       f"long terme : {FR[a['long_terme']]}. Actif très volatil, indicateurs on-chain non testés rétroactivement : confiance limitée."),
+            "achat_si": pros or ["Aucun indicateur acheteur à ce jour : attendre qu'un signal apparaisse."],
+            "vente_si": cons or ["Aucun indicateur vendeur à ce jour."],
+            "risques": ["Volatilité extrême (mouvements de 20 à 40 % possibles en quelques semaines).",
+                        "Position réduite et achats étalés ; jamais de levier."],
+        }
+    res = {"synthese_globale": "Analyse automatique à règles (sans IA) — " + " · ".join(notes) + ".",
+           "marches": out,
+           "qualite_des_donnees": "Analyse calculée directement à partir du vote pondéré ; elle ne lit pas les nuances entre indicateurs.",
+           "avertissement": "Analyse générale, sans prise en compte de votre situation personnelle ; aucune garantie de résultat."}
+    if actifs:
+        res["actifs_crypto"] = actifs
+    return res
 
 
 # ── Analyse rédigée par Claude (optionnelle) ─────────────────────────────────
@@ -238,6 +277,16 @@ def _valid(a: dict) -> bool:
             m = a["marches"][t]
             assert m["decision"] in DECISIONS and m["confiance"] in ("faible", "moderee", "forte")
             assert m["resume"] and isinstance(m["arguments_pour"], list) and isinstance(m["declencheurs"], list)
+        ac = a.get("actifs_crypto")
+        if ac is not None:      # optionnel : retiré s'il est mal formé plutôt que de rejeter toute l'analyse
+            try:
+                for k in ("sol", "hype"):
+                    x = ac[k]
+                    assert x["decision"] in DECISIONS and x["confiance"] in ("faible", "moderee", "forte") and x["resume"]
+                    for f in ("achat_si", "vente_si", "risques"):
+                        assert isinstance(x[f], list)
+            except Exception:
+                a.pop("actifs_crypto", None)
         return bool(a["synthese_globale"])
     except Exception:
         return False
@@ -301,7 +350,7 @@ def _age_hours(iso):
         return 1e9
 
 
-def run(out: Path, write_json, iso, backend, browser, reco, history, events, carried):
+def run(out: Path, write_json, iso, backend, browser, reco, history, events, carried, assets=None):
     def rj(name):
         try:
             return json.loads((out / name).read_text(encoding="utf-8"))
@@ -310,11 +359,13 @@ def run(out: Path, write_json, iso, backend, browser, reco, history, events, car
 
     tr = rj("trackrecord.json")
     dossier = build_dossier(iso, backend, browser, reco, history, events, rj("backtest.json"),
-                            rj("analytics.json"), carried, tr.get("resume"))
+                            rj("analytics.json"), carried, tr.get("resume"), assets)
     write_json(out / "dossier.json", dossier)
 
     sigs = {t: {"v": m["verdict"], "c": m["horizons"]["court"]["verdict"], "l": m["horizons"]["long"]["verdict"]}
             for t, m in dossier["marches"].items() if not m.get("indisponible")}
+    for k, a in (assets or {}).items():
+        sigs[f"actif_{k}"] = {"v": a["sig"], "c": a["horizons"]["c"]["sig"], "l": a["horizons"]["l"]["sig"]}
     prev = rj("analysis.json")
     akey = os.getenv("ANTHROPIC_API_KEY", "").strip()
     gkey = os.getenv("GEMINI_API_KEY", "").strip()
@@ -336,7 +387,7 @@ def run(out: Path, write_json, iso, backend, browser, reco, history, events, car
     if analysis is None:
         analysis = rules_analysis(dossier)
         analysis["source"] = "regles"
-        print("[analyste] analyse à règles publiée" + ("" if key else " (pas de clé ANTHROPIC_API_KEY)"))
+        print("[analyste] analyse à règles publiée" + ("" if key else " (aucune clé ANTHROPIC_API_KEY / GEMINI_API_KEY)"))
     analysis["genere_le"] = iso
     analysis["signaux"] = sigs
     write_json(out / "analysis.json", analysis)

@@ -177,3 +177,24 @@ def compute_reco(patches_in_order: list[dict]) -> dict:
         out[tab] = {**_vote(inds),
                     "horizons": {h: _vote([i for i in inds if i.get("h") == h]) for h in ("c", "l")}}
     return out
+
+
+# Verdicts par actif crypto : même vote pondéré, restreint aux indicateurs du groupe de l'actif.
+ASSET_GROUPS = {"eth": "Ethereum (ETH)", "sol": "Solana (SOL)", "hype": "Hyperliquid (HYPE)"}
+
+
+def compute_assets(patches_in_order: list[dict]) -> dict:
+    out = {}
+    for key, gname in ASSET_GROUPS.items():
+        inds = [dict(i) for g in _DEFAULTS["crypto"] if g["name"] == gname for i in g["indicators"]]
+        for patches in patches_in_order:
+            for ind_id, patch in (patches.get("crypto") or {}).items():
+                target = next((i for i in inds if i["id"] == ind_id), None)
+                if target is not None:
+                    target["sig"] = patch.get("sig", target["sig"])
+                    target["source"] = "live"
+        if inds:
+            out[key] = {**_vote(inds), "ids": [i["id"] for i in inds if i["source"] == "live"],
+                        "label": gname,
+                        "horizons": {h: _vote([i for i in inds if i.get("h") == h]) for h in ("c", "l")}}
+    return out

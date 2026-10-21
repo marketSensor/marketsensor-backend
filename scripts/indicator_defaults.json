@@ -883,6 +883,46 @@
      "h": "c",
      "f": "alt_tech",
      "fc": 10
+    },
+    {
+     "id": "sol_tvl",
+     "name": "SOL — capitaux déposés (30j)",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "sol_chain",
+     "fc": 8
+    },
+    {
+     "id": "sol_dex",
+     "name": "SOL — volume DEX (7j vs 30j)",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "sol_chain",
+     "fc": 8
+    },
+    {
+     "id": "sol_stable",
+     "name": "SOL — stablecoins (30j)",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "sol_chain",
+     "fc": 8
+    },
+    {
+     "id": "sol_funding",
+     "name": "SOL — funding à levier (7j)",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "sol_chain",
+     "fc": 8
     }
    ]
   },
@@ -936,6 +976,46 @@
      "sig": "neutral",
      "source": "live",
      "h": "c",
+     "f": "alt_tech",
+     "fc": 10
+    },
+    {
+     "id": "hype_rev",
+     "name": "HYPE — revenus du protocole (30j)",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "hype_chain",
+     "fc": 8
+    },
+    {
+     "id": "hype_tvl",
+     "name": "HYPE — capitaux déposés (30j)",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "hype_chain",
+     "fc": 8
+    },
+    {
+     "id": "hype_funding",
+     "name": "HYPE — funding à levier (7j)",
+     "w": 2,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
+     "f": "hype_chain",
+     "fc": 8
+    },
+    {
+     "id": "mm200_hype",
+     "name": "HYPE vs MM200",
+     "w": 3,
+     "sig": "neutral",
+     "source": "live",
+     "h": "l",
      "f": "alt_tech",
      "fc": 10
     }
