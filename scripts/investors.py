@@ -18,13 +18,14 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
-SEC_HEADERS = {"User-Agent": "MarketSense/1.0 (suivi public ; github.com/marketSensor/marketsensor-backend)",
+SEC_HEADERS = {"User-Agent": "MarketSense marketsense-pipeline@users.noreply.github.com",   # la SEC exige un nom et une adresse de contact
                "Accept-Encoding": "gzip, deflate"}
 CLERK_HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36"}
 BRK_CIK = "1067983"
 BUFFETT_REFRESH_H = 12
 PELOSI_REFRESH_H = 6
 PELOSI_YEARS = 3                # année en cours + 2 précédentes
+PARSER_VERSION = 2              # à augmenter quand la lecture des PDF change : les documents sont alors relus
 PELOSI_MAX_NEW_PDF = 30         # PDF analysés par exécution (le reste suit aux exécutions suivantes)
 
 # Correspondance nom d'émetteur (13F) -> symbole, pour les positions connues (sinon on affiche seulement le nom)
@@ -261,13 +262,13 @@ def _clean_asset(raw: str):
     m = re.search(r"\b(?:D|C):\s*(.+)$", text, re.S)
     if m:
         desc = re.sub(r"\s+", " ", m.group(1)).strip()
-    head = re.split(r"\n\s*(?:F\s*S:|D:|C:|S\s*O:|L:)", text)[0]
+    head = re.split(r"\n\s*(?:F\s*S\s*:|D\s*:|C\s*:|S\s*O\s*:|L\s*:)", text)[0]
     head = re.sub(r"\s+", " ", head).strip()
     at = None
-    m = re.search(r"\[([A-Z]{2})\]", head)
+    m = re.search(r"\)\s*\[([A-Z]{2})\]", head) or re.search(r"\[([A-Z]{2})\]", head)
     if m:
         at = m.group(1)
-        head = head.replace(m.group(0), "").strip()
+        head = re.sub(r"\s*\[" + at + r"\]", "", head, count=1).strip()
     tk = None
     m = re.search(r"\(([A-Z][A-Z0-9.\-]{0,6})\)\s*$", head)
     if m:
@@ -347,6 +348,9 @@ def parse_ptr_pdf(pdf_bytes: bytes, doc: str, filed: str, debug=False):
         trades, method = parse_ptr_text(text, doc, filed), "texte"
     if debug:
         print(f"[pelosi] debug {doc}: méthode={method}, {len(trades)} transactions, {len(tables_all)} tableaux")
+        for tb in tables_all[:2]:
+            for row in tb[:3]:
+                print(f"[pelosi] debug ligne | {repr(row)[:290]}")
         for line in text[:900].splitlines()[:14]:
             print(f"[pelosi] debug texte | {line}")
         for t in trades[:2]:
@@ -396,9 +400,12 @@ def _performance(trades):
 def update_pelosi(out, write_json, read_json):
     path, cache_path = out / "pelosi.json", out / "pelosi_cache.json"
     prev = read_json(path, {})
-    docs_prev = read_json(cache_path, {}).get("docs", {})
+    cache = read_json(cache_path, {})
+    docs_prev = cache.get("docs", {}) if cache.get("version") == PARSER_VERSION else {}
+    if cache and not docs_prev:
+        print("[pelosi] lecture des PDF modifiée : tous les documents sont relus")
     complete = prev.get("complete") and not prev.get("pending")
-    if prev.get("trades") and complete and _age_hours(prev.get("generated")) < PELOSI_REFRESH_H:
+    if prev.get("trades") and complete and docs_prev and _age_hours(prev.get("generated")) < PELOSI_REFRESH_H:
         print("[pelosi] données récentes : conservées")
         return
     try:
@@ -435,7 +442,7 @@ def update_pelosi(out, write_json, read_json):
         except Exception as e:
             print(f"[pelosi] performance : {type(e).__name__}: {e}")
         stats = {s: sum(1 for v in docs.values() if v["status"] == s) for s in ("ok", "image", "vide", "erreur")}
-        write_json(cache_path, {"docs": docs})
+        write_json(cache_path, {"version": PARSER_VERSION, "docs": docs})
         res = {"generated": _now_iso(), "pending": pending, "complete": pending == 0,
                "documents": stats, "filings": {k: {"status": v["status"], "filed": v["filed"], "url": v["url"]} for k, v in docs.items()}, "trades": trades, "n_trades": len(trades),
                "first": trades[-1]["date"] if trades else None, "last": trades[0]["date"] if trades else None,
