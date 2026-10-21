@@ -26,6 +26,7 @@ MIN_HOURS = float(os.getenv("ANALYST_MIN_HOURS", "6"))
 MODELS = [m for m in (os.getenv("ANALYST_MODEL", "").strip() or "claude-opus-5-5", "claude-sonnet-5-5") if m]
 
 FR = {"buy": "achat", "sell": "vente", "neutral": "neutre"}
+GEMINI_MODELS = [m for m in (os.getenv("GEMINI_MODEL", "").strip(), "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite") if m]
 DECISIONS = {"acheter", "renforcer_progressivement", "attendre", "alleger", "vendre"}
 DECISION_LABEL = {"acheter": "Acheter", "renforcer_progressivement": "Renforcer progressivement",
                   "attendre": "Attendre", "alleger": "Alléger", "vendre": "Vendre"}
@@ -242,25 +243,48 @@ def _valid(a: dict) -> bool:
         return False
 
 
-def llm_analysis(dossier: dict, key: str):
+def _user_message(dossier: dict) -> str:
     body_data = {k: v for k, v in dossier.items() if k != "consignes_chat"}
-    user = ("Voici le dossier du jour (JSON). Produis ton analyse au format demandé.\n\n"
+    return ("Voici le dossier du jour (JSON). Produis ton analyse au format demandé.\n\n"
             + json.dumps(body_data, ensure_ascii=False, separators=(",", ":")))
-    for model in dict.fromkeys(MODELS):
+
+
+def _call_claude(model: str, key: str, user: str) -> str:
+    r = requests.post("https://api.anthropic.com/v1/messages",
+                      headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                      json={"model": model, "max_tokens": 8000, "system": SYSTEM_PROMPT,
+                            "messages": [{"role": "user", "content": user}]}, timeout=240)
+    if r.status_code != 200:
+        raise RuntimeError(f"HTTP {r.status_code} {r.text[:200]}")
+    return "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type") == "text")
+
+
+def _call_gemini(model: str, key: str, user: str) -> str:
+    r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                      headers={"x-goog-api-key": key, "content-type": "application/json"},
+                      json={"systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+                            "contents": [{"role": "user", "parts": [{"text": user}]}],
+                            "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 8192,
+                                                 "temperature": 0.3}}, timeout=240)
+    if r.status_code != 200:
+        raise RuntimeError(f"HTTP {r.status_code} {r.text[:200]}")
+    cands = r.json().get("candidates") or []
+    return "".join(p.get("text", "") for c in cands[:1] for p in (c.get("content") or {}).get("parts", []))
+
+
+def llm_analysis(dossier: dict, anthropic_key: str, gemini_key: str):
+    """Essaie Claude (si clé), puis Gemini (si clé). Renvoie l'analyse avec `modele` et `fournisseur`."""
+    user = _user_message(dossier)
+    attempts = []
+    if anthropic_key:
+        attempts += [("Claude", m, anthropic_key, _call_claude) for m in dict.fromkeys(MODELS)]
+    if gemini_key:
+        attempts += [("Gemini", m, gemini_key, _call_gemini) for m in dict.fromkeys(GEMINI_MODELS)]
+    for name, model, key, fn in attempts:
         try:
-            r = requests.post("https://api.anthropic.com/v1/messages",
-                              headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                                       "content-type": "application/json"},
-                              json={"model": model, "max_tokens": 8000, "system": SYSTEM_PROMPT,
-                                    "messages": [{"role": "user", "content": user}]},
-                              timeout=240)
-            if r.status_code != 200:
-                print(f"[analyste] {model}: HTTP {r.status_code} {r.text[:200]}")
-                continue
-            text = "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type") == "text")
-            a = _extract_json(text)
+            a = _extract_json(fn(model, key, user))
             if _valid(a):
-                a["modele"] = model
+                a["modele"], a["fournisseur"] = model, name
                 return a
             print(f"[analyste] {model}: réponse JSON incomplète")
         except Exception as e:
@@ -292,7 +316,9 @@ def run(out: Path, write_json, iso, backend, browser, reco, history, events, car
     sigs = {t: {"v": m["verdict"], "c": m["horizons"]["court"]["verdict"], "l": m["horizons"]["long"]["verdict"]}
             for t, m in dossier["marches"].items() if not m.get("indisponible")}
     prev = rj("analysis.json")
-    key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    akey = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    gkey = os.getenv("GEMINI_API_KEY", "").strip()
+    key = akey or gkey
     analysis = None
 
     if key:
@@ -300,10 +326,10 @@ def run(out: Path, write_json, iso, backend, browser, reco, history, events, car
         if fresh_llm:
             print("[analyste] analyse IA encore valable (aucun signal changé) : conservée")
             return
-        analysis = llm_analysis(dossier, key)
+        analysis = llm_analysis(dossier, akey, gkey)
         if analysis:
             analysis["source"] = "llm"
-            print(f"[analyste] analyse rédigée par {analysis['modele']}")
+            print(f"[analyste] analyse rédigée par {analysis['fournisseur']} ({analysis['modele']})")
         elif prev.get("source") == "llm" and _age_hours(prev.get("genere_le")) < 24:
             print("[analyste] échec de l'IA : l'analyse IA de moins de 24 h est conservée")
             return
