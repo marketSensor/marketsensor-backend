@@ -371,12 +371,12 @@ def _btc_support():
     if hi <= lo:
         return None
     r = (px - lo) / (hi - lo)
-    sig = "buy" if r < 0.25 else "sell" if r > 0.9 else "neutral"
+    sig = "buy" if r < 0.25 else "neutral"      # près du plus haut = tendance, pas un signal de vente en soi
     return {"btcsupp": _ind(
         _norm(r * 100, 0, 100), f"{r*100:.0f} % de la fourchette", "", sig,
         f"Bitcoin à {r*100:.0f} % de sa fourchette 180 jours ({lo:,.0f} – {hi:,.0f} $) — ".replace(",", " ")
         + ("proche de son support : le risque à la baisse est limité." if r < 0.25
-           else "collé à sa résistance : peu de marge avant le haut de fourchette." if r > 0.9
+           else "collé à sa résistance (en tendance haussière, ce n'est pas en soi un signal de vente)." if r > 0.9
            else "milieu de fourchette, ni support ni résistance proche."))}
 
 
