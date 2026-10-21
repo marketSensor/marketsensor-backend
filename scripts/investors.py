@@ -258,12 +258,20 @@ def _accounts(sub: dict):
 def _buffett_indicator():
     """Valeur de marché des actions américaines (Fed, flux Z.1) rapportée au PIB : repère de valorisation globale."""
     import indicators
-    def fred(series):                              # FRED renvoie parfois une réponse vide : nouvelles tentatives
+    def fred(series):                              # FRED renvoie parfois une réponse vide : nouvelles tentatives, avec diagnostic
         for n in range(4):
-            v = indicators._fred(series, 4)        # le dernier point est parfois vide : on en lit plusieurs
-            if v:
-                return v
-            time.sleep(4 * (n + 1))
+            try:
+                r = requests.get("https://api.stlouisfed.org/fred/series/observations", timeout=30,
+                                 headers={"User-Agent": "MarketSense/1.0"},
+                                 params={"series_id": series, "api_key": indicators.FRED_KEY, "file_type": "json",
+                                         "sort_order": "desc", "limit": 8})
+                obs = [float(o["value"]) for o in r.json().get("observations", []) if o["value"] != "."]
+                if obs:
+                    return obs
+                print(f"[buffett] FRED {series}: aucune valeur (HTTP {r.status_code})")
+            except Exception as e:
+                print(f"[buffett] FRED {series} essai {n + 1}: HTTP {getattr(r, 'status_code', '?')} {type(e).__name__} | {(getattr(r, 'text', '') or '')[:90]!r}")
+            time.sleep(3 * (n + 1))
         return None
     eq = fred("NCBEILQ027S")                       # millions de $
     gdp = fred("GDP")                              # milliards de $
