@@ -44,6 +44,7 @@ jobs:
           ANALYST_MODEL: ${{ vars.ANALYST_MODEL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}      # optionnel, offre gratuite de Google AI Studio
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}      # adresse de contact déclarée à la SEC (obligatoire pour lire les 13F de Buffett)
         run: python scripts/build_data.py --out out --alert-file "$RUNNER_TEMP/alert.json"
 
       - name: Publier sur la branche data

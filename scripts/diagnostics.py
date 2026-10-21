@@ -17,7 +17,7 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
-SECRET_ENV = ("FRED_API_KEY", "SMTP_USER", "SMTP_PASSWORD", "ALERT_EMAILS", "BITBO_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY")
+SECRET_ENV = ("FRED_API_KEY", "SMTP_USER", "SMTP_PASSWORD", "ALERT_EMAILS", "BITBO_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "SEC_CONTACT")
 _PATTERN = re.compile(r"(?i)\b(api[_-]?key|apikey|key|token|password|passwd|secret|signature)=[^&\s'\"<>]+")
 MAX_LINES, MAX_LEN = 600, 300
 

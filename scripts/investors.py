@@ -11,6 +11,7 @@ Chaque fichier précédent est conservé si la source est indisponible.
 """
 import io
 import json
+import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -18,8 +19,14 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
-SEC_HEADERS = {"User-Agent": "MarketSense marketsense-pipeline@users.noreply.github.com",   # la SEC exige un nom et une adresse de contact
-               "Accept-Encoding": "gzip, deflate"}
+def sec_headers() -> dict:
+    """La SEC exige que les programmes automatisés se déclarent (nom + adresse de contact) : secret SEC_CONTACT."""
+    contact = os.getenv("SEC_CONTACT", "").strip()
+    if not contact:
+        raise RuntimeError("secret SEC_CONTACT absent : la SEC exige une adresse de contact dans l'en-tête de ses requêtes")
+    return {"User-Agent": f"MarketSense {contact}", "Accept-Encoding": "gzip, deflate"}
+
+
 CLERK_HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36"}
 BRK_CIK = "1067983"
 BUFFETT_REFRESH_H = 12
@@ -50,24 +57,6 @@ def _age_hours(iso):
         return (datetime.now(timezone.utc) - datetime.fromisoformat(iso.replace("Z", "+00:00"))).total_seconds() / 3600
     except Exception:
         return 1e9
-
-
-def _sec_probe():
-    """Diagnostic : quelles variantes d'en-tête la SEC accepte depuis ce serveur (publié dans diagnostics.json)."""
-    url = f"https://data.sec.gov/submissions/CIK{BRK_CIK.zfill(10)}.json"
-    variants = {
-        "actuel": SEC_HEADERS["User-Agent"],
-        "navigateur": CLERK_HEADERS["User-Agent"],
-        "compat": "Mozilla/5.0 (compatible; MarketSense/1.0; +https://github.com/marketSensor/marketsensor-backend)",
-        "python": "python-requests/2.32",
-    }
-    for name, ua in variants.items():
-        try:
-            r = requests.get(url, headers={"User-Agent": ua, "Accept": "application/json"}, timeout=30)
-            txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", r.text))[:260]
-            print(f"[buffett] sonde UA={name} -> {r.status_code} | {txt}")
-        except Exception as e:
-            print(f"[buffett] sonde UA={name} -> {type(e).__name__}: {e}")
 
 
 def _get(url, headers, timeout=40, tries=3, **kw):
@@ -143,13 +132,13 @@ def _list_13f(sub: dict) -> list[dict]:
 
 def _fetch_holdings(acc: str) -> list[dict]:
     base = f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/{acc.replace('-', '')}/"
-    idx = _get(base + "index.json", SEC_HEADERS).json()
+    idx = _get(base + "index.json", sec_headers()).json()
     names = [x["name"] for x in idx["directory"]["item"]]
     xmls = [n for n in names if n.lower().endswith(".xml") and "primary_doc" not in n.lower()]
     pick = next((n for n in xmls if "info" in n.lower()), xmls[0] if xmls else None)
     if not pick:
         raise RuntimeError(f"table d'information introuvable dans {acc} : {names}")
-    return parse_infotable(_get(base + pick, SEC_HEADERS).content)
+    return parse_infotable(_get(base + pick, sec_headers()).content)
 
 
 def build_holdings(cur: list[dict], prev: list[dict]) -> dict:
@@ -175,7 +164,7 @@ def build_holdings(cur: list[dict], prev: list[dict]) -> dict:
 
 def _cash():
     """Trésorerie de Berkshire (comptes trimestriels, XBRL SEC). Meilleur effort : composantes affichées séparément."""
-    j = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{BRK_CIK.zfill(10)}.json", SEC_HEADERS, timeout=90).json()
+    j = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{BRK_CIK.zfill(10)}.json", sec_headers(), timeout=90).json()
     found = {}
     for ns, tags in j.get("facts", {}).items():
         for tag, body in tags.items():
@@ -218,7 +207,7 @@ def update_buffett(out, write_json, read_json):
         print("[buffett] données récentes : conservées")
         return
     try:
-        sub = _get(f"https://data.sec.gov/submissions/CIK{BRK_CIK.zfill(10)}.json", SEC_HEADERS).json()
+        sub = _get(f"https://data.sec.gov/submissions/CIK{BRK_CIK.zfill(10)}.json", sec_headers()).json()
         filings = _list_13f(sub)
         if len(filings) < 2:
             raise RuntimeError(f"moins de 2 déclarations 13F trouvées ({len(filings)})")
@@ -245,7 +234,6 @@ def update_buffett(out, write_json, read_json):
         print(f"[buffett] {data['n_positions']} positions, {data['total_value'] / 1e9:.0f} Md$, trimestre {data['filing']['period']}")
     except Exception as e:
         print(f"::warning::Buffett : {type(e).__name__}: {e} (fichier précédent conservé)")
-        _sec_probe()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
