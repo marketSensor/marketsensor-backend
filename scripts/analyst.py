@@ -74,7 +74,7 @@ Réponds par UN SEUL objet JSON valide (sans texte autour, sans balises), de for
 }
 Les trois clés bourse, crypto, matieres sont obligatoires, ainsi que sol et hype dans actifs_crypto.
 
-Consignes pour actifs_crypto : le dossier contient `actifs_crypto` (verdict propre à Solana et à Hyperliquid) et, dans `marches.crypto.indicateurs`, les indicateurs de ces actifs (groupes « Solana (SOL) » et « Hyperliquid (HYPE) »). Ce sont des actifs très volatils et récents : les indicateurs on-chain (capitaux déposés, volume, stablecoins, revenus) montrent si l'argent entre ou sort ; le funding mesure le levier des traders (contrariant : trop élevé = risque de purge). Ces indicateurs on-chain n'ont PAS été testés rétroactivement : dis-le, et reste prudent. Le verdict de l'actif ne doit pas être recopié du verdict global crypto (dominé par Bitcoin). Taille de position réduite et étalement systématiques pour ces actifs."""
+Consignes pour actifs_crypto : le dossier contient `actifs_crypto` (verdict propre à Solana et à Hyperliquid) et, dans `marches.crypto.indicateurs`, les indicateurs de ces actifs (groupes « Solana (SOL) » et « Hyperliquid (HYPE) »). Ce sont des actifs très volatils et récents : les indicateurs on-chain (capitaux déposés, volume, stablecoins, revenus) montrent si l'argent entre ou sort ; le funding mesure le levier des traders (contrariant : trop élevé = risque de purge). Ces indicateurs on-chain n'ont PAS été testés rétroactivement : dis-le, et reste prudent. Le verdict de l'actif ne doit pas être recopié du verdict global crypto (dominé par Bitcoin). Le dossier contient aussi `niveaux_de_prix` (prix, supports, résistances, MM50/MM200, volatilité ATR) : dans achat_si et vente_si, cite des prix concrets issus de ces niveaux (ex. « clôture sous 142 $, support 30 jours »), en précisant que ce sont des repères et non des prévisions. Taille de position réduite et étalement systématiques pour ces actifs."""
 
 
 PERSONA = SYSTEM_PROMPT.split("Réponds par UN SEUL objet JSON")[0].rstrip()
@@ -95,7 +95,7 @@ def _merged(backend: dict, browser: dict, tab: str) -> dict:
     return out
 
 
-def build_dossier(iso, backend, browser, reco, history, events, backtest, analytics, carried, suivi=None, assets=None) -> dict:
+def build_dossier(iso, backend, browser, reco, history, events, backtest, analytics, carried, suivi=None, assets=None, levels=None) -> dict:
     carried_set = set(carried or [])
     marches = {}
     for tab in eng.TABS:
@@ -156,6 +156,13 @@ def build_dossier(iso, backend, browser, reco, history, events, backtest, analyt
                               "court_terme": a["horizons"]["c"]["sig"], "long_terme": a["horizons"]["l"]["sig"],
                               "indicateurs": a["ids"]}
                           for k, a in (assets or {}).items()},
+        "niveaux_de_prix": {k: {"actif": v["label"], "prix": round(v["prix"], 4), "date": v["date"],
+                                "volatilite_atr_pct": round(v.get("atr_pct", 0), 1),
+                                "mm50": round(v["mm50"], 4) if v.get("mm50") else None,
+                                "mm200": round(v["mm200"], 4) if v.get("mm200") else None,
+                                "supports": [{"niveau": round(x["prix"], 4), "repere": x["label"], "distance_pct": round(x["dist_pct"], 1)} for x in v["supports"]],
+                                "resistances": [{"niveau": round(x["prix"], 4), "repere": x["label"], "distance_pct": round(x["dist_pct"], 1)} for x in v["resistances"]]}
+                            for k, v in (levels or {}).items() if k in ("btc", "eth", "sol", "hype")},
         "calendrier_macro": ev,
         "divergences_detectees": divs,
         "test_retroactif": {"actifs_testes": tests, "limites": (backtest or {}).get("caveat"),
@@ -244,6 +251,13 @@ def rules_analysis(dossier: dict) -> dict:
         pros = [f"{r['nom']} : {r['valeur']}" for r in rows if r["signal"] == "achat"][:4]
         cons = [f"{r['nom']} : {r['valeur']}" for r in rows if r["signal"] == "vente"][:4]
         name = a["actif"]
+        lv = ((dossier.get("niveaux_de_prix") or {}).get(k)) or {}
+        if lv.get("supports"):
+            s0 = lv["supports"][0]
+            cons.append(f"Clôture sous le support {s0['niveau']} $ ({s0['repere']}, {s0['distance_pct']} %)")
+        if lv.get("resistances"):
+            r0 = lv["resistances"][0]
+            pros.append(f"Franchissement de la résistance {r0['niveau']} $ ({r0['repere']}, +{r0['distance_pct']} %)")
         actifs[k] = {
             "decision": dec, "confiance": "faible",
             "resume": (f"{why} {name} : {a['achat_pct']} % achat / {a['vente_pct']} % vente ; court terme : {FR[a['court_terme']]}, "
@@ -359,7 +373,7 @@ def run(out: Path, write_json, iso, backend, browser, reco, history, events, car
 
     tr = rj("trackrecord.json")
     dossier = build_dossier(iso, backend, browser, reco, history, events, rj("backtest.json"),
-                            rj("analytics.json"), carried, tr.get("resume"), assets)
+                            rj("analytics.json"), carried, tr.get("resume"), assets, rj("levels.json").get("actifs"))
     write_json(out / "dossier.json", dossier)
 
     sigs = {t: {"v": m["verdict"], "c": m["horizons"]["court"]["verdict"], "l": m["horizons"]["long"]["verdict"]}

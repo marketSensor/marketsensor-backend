@@ -488,7 +488,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "simulated",
-     "h": "l"
+     "h": "l",
+     "f": "btc_valuation",
+     "fc": 4
     },
     {
      "id": "nupl",
@@ -496,7 +498,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "simulated",
-     "h": "l"
+     "h": "l",
+     "f": "btc_valuation",
+     "fc": 4
     },
     {
      "id": "sopr",
@@ -541,7 +545,9 @@
      "w": 3,
      "sig": "neutral",
      "source": "live",
-     "h": "l"
+     "h": "l",
+     "f": "btc_valuation",
+     "fc": 4
     },
     {
      "id": "ls_ratio",

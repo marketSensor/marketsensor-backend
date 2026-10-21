@@ -13,7 +13,9 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import yfinance as yf
 
-TAB_ASSET = {"bourse": ("^GSPC", "S&P 500"), "crypto": ("BTC-USD", "Bitcoin"), "matieres": ("GC=F", "Or")}
+TAB_ASSET = {"bourse": ("^GSPC", "S&P 500"), "crypto": ("BTC-USD", "Bitcoin"), "matieres": ("GC=F", "Or"),
+             "eth": ("ETH-USD", "Ethereum"), "sol": ("SOL-USD", "Solana"), "hype": ("HYPE-USD", "Hyperliquid")}
+MAIN_TABS = ("bourse", "crypto", "matieres")     # les 3 onglets ; eth/sol/hype sont des verdicts par actif (comptés à part)
 HORIZONS = {"1m": 30, "3m": 90, "6m": 180, "12m": 365}
 MIN_SIGNIFICANT = 30          # nombre de signaux évalués en dessous duquel le suivi est jugé trop mince
 MAX_SNAPSHOTS = 3000
@@ -39,10 +41,12 @@ def _summary(snaps: list, series: dict) -> dict:
     last_dates = {t: series[t].index[-1].date() for t in series if len(series[t])}
     tabs = {}
     evaluated = {h: 0 for h in HORIZONS}
+    ev_tab = {}
     for tab in TAB_ASSET:
         if tab not in series:
             continue
         views = {"global": {}, "court": {}, "long": {}}
+        ev_tab[tab] = {h: 0 for h in HORIZONS}
         for view, key in (("global", "v"), ("court", "c"), ("long", "l")):
             for hk, days in HORIZONS.items():
                 buckets = {"buy": [], "neutral": [], "sell": []}
@@ -66,7 +70,12 @@ def _summary(snaps: list, series: dict) -> dict:
                                              if n and sig != "neutral" else None)}
                 views[view][hk] = cell
                 if view == "global":
-                    evaluated[hk] += sum(c["n"] for c in cell.values())
+                    n_ev = sum(c["n"] for c in cell.values())
+                    ev_tab[tab][hk] = n_ev
+                    if tab in MAIN_TABS:
+                        evaluated[hk] += n_ev
+        views["evalues"] = ev_tab[tab]
+        views["significatif"] = any(n >= MIN_SIGNIFICANT for n in ev_tab[tab].values())
         tabs[tab] = views
     first = snaps[0]["date"] if snaps else None
     days_back = (date.today() - datetime.fromisoformat(first).date()).days if first else 0
@@ -107,7 +116,7 @@ def update(out, write_json, read_json, iso, reco, history):
     if not snaps or snaps[-1]["date"] != today:
         snaps.append({"date": today, "price": prices_on(datetime.fromisoformat(today).date()),
                       "sig": {t: {"v": r["sig"], "c": r["horizons"]["c"]["sig"], "l": r["horizons"]["l"]["sig"]}
-                              for t, r in reco.items()}})
+                              for t, r in reco.items() if t in TAB_ASSET}})
     snaps = snaps[-MAX_SNAPSHOTS:]
     resume = _summary(snaps, series)
     write_json(path, {"snapshots": snaps, "resume": resume})
