@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "17 * * * *"      # toutes les heures (minute 17 : moins de retard qu'à :00)
   workflow_dispatch:           # lancement manuel depuis l'onglet Actions
+    inputs:
+      test_alert:
+        description: "Envoyer un e-mail de test (vérifie les secrets SMTP)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -26,6 +31,30 @@ jobs:
 
       - name: Installer les dépendances
         run: pip install -r requirements.txt
+
+      - name: E-mail de test (lancement manuel uniquement)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_alert }}
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ALERT_EMAILS: ${{ secrets.ALERT_EMAILS }}
+        run: |
+          python - <<'PY'
+          import sys, datetime
+          sys.path.insert(0, ".")
+          import alerts
+          if not alerts.configured():
+              print("::error::Secrets manquants : SMTP_USER, SMTP_PASSWORD et ALERT_EMAILS sont requis.")
+              sys.exit(1)
+          ts = datetime.datetime.now(datetime.timezone.utc).isoformat()
+          ok = alerts.send_alert([{"tab": "crypto", "from": "neutral", "to": "buy"}], ts)
+          if not ok:
+              print("::error::Envoi refusé par le serveur SMTP (voir le message d'erreur ci-dessus : mot de passe d'application ?).")
+              sys.exit(1)
+          print("E-mail de test envoyé.")
+          PY
 
       - name: Récupérer l'état précédent (branche data)
         run: |
