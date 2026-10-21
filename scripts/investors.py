@@ -53,15 +53,21 @@ def _age_hours(iso):
 
 
 def _sec_probe():
-    """Diagnostic : quelles adresses de la SEC répondent depuis ce serveur (publié dans diagnostics.json)."""
-    for url in (f"https://data.sec.gov/submissions/CIK{BRK_CIK.zfill(10)}.json",
-                f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={BRK_CIK}&type=13F-HR&dateb=&owner=include&count=10&output=atom",
-                f"https://www.sec.gov/Archives/edgar/data/{BRK_CIK}/"):
+    """Diagnostic : quelles variantes d'en-tête la SEC accepte depuis ce serveur (publié dans diagnostics.json)."""
+    url = f"https://data.sec.gov/submissions/CIK{BRK_CIK.zfill(10)}.json"
+    variants = {
+        "actuel": SEC_HEADERS["User-Agent"],
+        "navigateur": CLERK_HEADERS["User-Agent"],
+        "compat": "Mozilla/5.0 (compatible; MarketSense/1.0; +https://github.com/marketSensor/marketsensor-backend)",
+        "python": "python-requests/2.32",
+    }
+    for name, ua in variants.items():
         try:
-            r = requests.get(url, headers=SEC_HEADERS, timeout=30)
-            print(f"[buffett] sonde {url.split('/')[2]}{url[url.index('/', 8):][:60]} -> {r.status_code} {re.sub(chr(10), ' ', r.text[:120])}")
+            r = requests.get(url, headers={"User-Agent": ua, "Accept": "application/json"}, timeout=30)
+            txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", r.text))[:260]
+            print(f"[buffett] sonde UA={name} -> {r.status_code} | {txt}")
         except Exception as e:
-            print(f"[buffett] sonde {url[:70]} -> {type(e).__name__}: {e}")
+            print(f"[buffett] sonde UA={name} -> {type(e).__name__}: {e}")
 
 
 def _get(url, headers, timeout=40, tries=3, **kw):
