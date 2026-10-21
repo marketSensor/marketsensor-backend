@@ -295,6 +295,149 @@ def _stablecoins():
            else "offre stable, pas de flux notable."))}
 
 
+# ── Solana & Hyperliquid (DefiLlama + API publique Hyperliquid, sans clé) ────
+
+HL_URL = "https://api.hyperliquid.xyz/info"
+
+
+def _llama_chain_tvl_chg(chain: str, days: int = 30):
+    """Variation (%) de la TVL d'une blockchain sur `days` jours + TVL actuelle."""
+    r = requests.get(f"https://api.llama.fi/v2/historicalChainTvl/{chain}", timeout=TIMEOUT + 8, headers=HEADERS)
+    rows = r.json()
+    if len(rows) < days + 2:
+        return None
+    now, before = float(rows[-1]["tvl"]), float(rows[-1 - days]["tvl"])
+    return ((now / before - 1) * 100, now) if before else None
+
+
+def _sum_last(chart, n: int, offset: int = 0):
+    vals = [float(v or 0) for _, v in chart]
+    end = len(vals) - offset
+    return sum(vals[max(0, end - n):end]), len(vals[max(0, end - n):end])
+
+
+def _sol_tvl():
+    res = _llama_chain_tvl_chg("Solana")
+    if not res:
+        return None
+    chg, tvl = res
+    sig = "buy" if chg > 10 else "sell" if chg < -10 else "neutral"
+    return {"sol_tvl": _ind(
+        _norm(chg, -30, 30), f"{chg:+.1f} % / 30 j", "", sig,
+        f"Capitaux déposés dans les applications Solana : {tvl/1e9:.1f} Md$, {chg:+.1f} % sur 30 jours (DefiLlama) — "
+        + ("l'écosystème attire du capital." if chg > 10
+           else "des capitaux quittent l'écosystème." if chg < -10 else "stable, sans tendance nette."))}
+
+
+def _sol_dex():
+    r = requests.get("https://api.llama.fi/overview/dexs/Solana",
+                     params={"excludeTotalDataChartBreakdown": "true"}, timeout=TIMEOUT + 8, headers=HEADERS)
+    chart = r.json().get("totalDataChart") or []
+    if len(chart) < 40:
+        return None
+    s7, n7 = _sum_last(chart, 7)
+    s30, n30 = _sum_last(chart, 30, offset=7)
+    if not s30 or n7 < 7 or n30 < 20:
+        return None
+    chg = (s7 / n7) / (s30 / n30) * 100 - 100
+    sig = "buy" if chg > 20 else "sell" if chg < -30 else "neutral"
+    return {"sol_dex": _ind(
+        _norm(chg, -50, 50), f"{chg:+.0f} % (7 j vs 30 j)", "", sig,
+        f"Volume d'échange sur les DEX Solana : {chg:+.0f} % (moyenne 7 jours contre les 30 jours précédents, DefiLlama) — "
+        + ("activité en forte hausse, l'intérêt monte." if chg > 20
+           else "activité en net recul, l'intérêt retombe." if chg < -30 else "activité dans la norme."))}
+
+
+def _sol_stable():
+    r = requests.get("https://stablecoins.llama.fi/stablecoincharts/Solana", timeout=TIMEOUT + 8, headers=HEADERS)
+    rows = r.json()
+    if len(rows) < 32:
+        return None
+
+    def tot(row):
+        t = row.get("totalCirculatingUSD") or row.get("totalCirculating") or {}
+        return float(t.get("peggedUSD", 0))
+    now, before = tot(rows[-1]), tot(rows[-31])
+    if not before:
+        return None
+    chg = (now / before - 1) * 100
+    sig = "buy" if chg > 3 else "sell" if chg < -2 else "neutral"
+    return {"sol_stable": _ind(
+        _norm(chg, -5, 8), f"{chg:+.1f} % / 30 j", "", sig,
+        f"Stablecoins sur Solana : {now/1e9:.1f} Md$, {chg:+.1f} % sur 30 jours (DefiLlama) — "
+        + ("de la liquidité fraîche arrive sur la blockchain." if chg > 3
+           else "de la liquidité quitte la blockchain." if chg < -2 else "liquidité stable."))}
+
+
+def _hl_funding(coin: str, key: str, label: str):
+    """Funding moyen 7 jours (annualisé) des contrats perpétuels Hyperliquid — mesure le positionnement des traders."""
+    import time
+    start = int((time.time() - 7 * 86400) * 1000)
+    r = requests.post(HL_URL, json={"type": "fundingHistory", "coin": coin, "startTime": start},
+                      timeout=TIMEOUT, headers=HEADERS)
+    rows = r.json()
+    if not isinstance(rows, list) or len(rows) < 24:
+        return None
+    rate = sum(float(x["fundingRate"]) for x in rows) / len(rows)
+    ann = rate * 24 * 365 * 100          # taux horaire -> % annualisé
+    sig = "sell" if ann > 60 else "buy" if ann < -5 else "neutral"
+    extra = ""
+    try:
+        m = requests.post(HL_URL, json={"type": "metaAndAssetCtxs"}, timeout=TIMEOUT, headers=HEADERS).json()
+        names = [u["name"] for u in m[0]["universe"]]
+        c = m[1][names.index(coin)]
+        extra = f" Intérêt ouvert : {float(c['openInterest']) * float(c['markPx']) / 1e6:.0f} M$."
+    except Exception as e:
+        print(f"[extras] {label} intérêt ouvert: {e}")
+    return {key: _ind(
+        _norm(ann, -20, 100), f"{ann:+.0f} % / an", "", sig,
+        f"Funding moyen 7 jours {label} sur Hyperliquid : {ann:+.0f} % annualisé (référence neutre ≈ +11 %).{extra} "
+        + ("Les acheteurs à levier paient très cher : positions longues surchargées, risque de purge." if ann > 60
+           else "Les vendeurs paient pour rester short : pessimisme extrême, un rebond forcé est possible." if ann < -5
+           else "Positionnement à levier sans excès."))}
+
+
+def _sol_funding():
+    return _hl_funding("SOL", "sol_funding", "SOL")
+
+
+def _hype_funding():
+    return _hl_funding("HYPE", "hype_funding", "HYPE")
+
+
+def _hype_rev():
+    r = requests.get("https://api.llama.fi/summary/fees/hyperliquid", params={"dataType": "dailyRevenue"},
+                     timeout=TIMEOUT + 8, headers=HEADERS)
+    chart = r.json().get("totalDataChart") or []
+    if len(chart) < 65:
+        return None
+    s30, n = _sum_last(chart, 30)
+    p30, m = _sum_last(chart, 30, offset=30)
+    if not p30 or n < 28 or m < 28:
+        return None
+    chg = (s30 / p30 - 1) * 100
+    sig = "buy" if chg > 15 else "sell" if chg < -25 else "neutral"
+    return {"hype_rev": _ind(
+        _norm(chg, -40, 40), f"{chg:+.0f} % / 30 j", "", sig,
+        f"Revenus du protocole Hyperliquid : {s30/1e6:.0f} M$ sur 30 jours, {chg:+.0f} % vs les 30 jours précédents (DefiLlama). "
+        "Ces revenus servent largement à racheter du HYPE — "
+        + ("la demande par rachats augmente." if chg > 15
+           else "la pression d'achat par rachats diminue." if chg < -25 else "rachats stables."))}
+
+
+def _hype_tvl():
+    res = _llama_chain_tvl_chg("Hyperliquid%20L1")
+    if not res:
+        return None
+    chg, tvl = res
+    sig = "buy" if chg > 10 else "sell" if chg < -10 else "neutral"
+    return {"hype_tvl": _ind(
+        _norm(chg, -30, 30), f"{chg:+.1f} % / 30 j", "", sig,
+        f"Capitaux déposés sur Hyperliquid : {tvl/1e9:.1f} Md$, {chg:+.1f} % sur 30 jours (DefiLlama) — "
+        + ("les traders y déposent plus de capital." if chg > 10
+           else "les dépôts reculent." if chg < -10 else "dépôts stables."))}
+
+
 # ── Points d'entrée ──────────────────────────────────────────────────────────
 
 def bourse_extras() -> dict:
@@ -311,7 +454,10 @@ def bourse_extras() -> dict:
 def crypto_extras() -> dict:
     out = {}
     for label, fn in [("MVRV", _mvrv_ratio), ("OKX long/short", _okx_long_short),
-                      ("stablecoins", _stablecoins)]:
+                      ("stablecoins", _stablecoins),
+                      ("SOL TVL", _sol_tvl), ("SOL DEX", _sol_dex), ("SOL stablecoins", _sol_stable),
+                      ("SOL funding", _sol_funding), ("HYPE funding", _hype_funding),
+                      ("HYPE revenus", _hype_rev), ("HYPE TVL", _hype_tvl)]:
         _try(label, fn, out)
     return out
 

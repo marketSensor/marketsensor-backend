@@ -185,7 +185,8 @@ def main() -> int:
     # 8. Assistant analyste (dossier.json + analysis.json) — un échec ne bloque jamais la publication
     try:
         import analyst
-        analyst.run(out, write_json, iso, backend, browser, reco, history, events, carried)
+        analyst.run(out, write_json, iso, backend, browser, reco, history, events, carried,
+                    assets=eng.compute_assets([backend, browser]))
     except Exception as e:
         print(f"::warning::assistant analyste : {type(e).__name__}: {e}")
 
