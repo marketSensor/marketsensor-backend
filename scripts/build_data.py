@@ -192,6 +192,13 @@ def main() -> int:
     except Exception as e:
         print(f"::warning::suivi des résultats : {type(e).__name__}: {e}")
 
+    # 7c. Grands investisseurs (Buffett : 13F de Berkshire ; Pelosi : déclarations de transactions) — sans lien avec les signaux
+    try:
+        import investors
+        investors.update(out, write_json, read_json)
+    except Exception as e:
+        print(f"::warning::grands investisseurs : {type(e).__name__}: {e}")
+
     # 8. Assistant analyste (dossier.json + analysis.json) — un échec ne bloque jamais la publication
     try:
         import analyst
