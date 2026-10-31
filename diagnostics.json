@@ -1,0 +1,676 @@
+{
+ "generated": "2026-10-31T18:33:10Z",
+ "python": "3.12.15",
+ "versions": {
+  "yfinance": "1.7.0",
+  "pandas": "2.2.3",
+  "numpy": "2.1.3",
+  "requests": "2.32.3",
+  "curl_cffi": "0.17.0"
+ },
+ "secrets_present": {
+  "FRED_API_KEY": true,
+  "SMTP_USER": false,
+  "SMTP_PASSWORD": false,
+  "ALERT_EMAILS": false,
+  "BITBO_API_KEY": false,
+  "ANTHROPIC_API_KEY": false,
+  "GEMINI_API_KEY": true,
+  "SEC_CONTACT": true
+ },
+ "probes": [
+  {
+   "host": "api.alternative.me",
+   "status": 200
+  },
+  {
+   "host": "api.blockchain.info",
+   "status": 200
+  },
+  {
+   "host": "api.coingecko.com",
+   "status": 404
+  },
+  {
+   "host": "api.stlouisfed.org",
+   "error": "ReadTimeout: HTTPSConnectionPool(host='www.stlouisfed.org', port=443): Read timed out. (read timeout=12)"
+  },
+  {
+   "host": "bitbo.io",
+   "status": 200
+  },
+  {
+   "host": "cdn.cboe.com",
+   "status": 403
+  },
+  {
+   "host": "charts.bitbo.io",
+   "status": 200
+  },
+  {
+   "host": "fapi.binance.com",
+   "status": 451
+  },
+  {
+   "host": "fc.yahoo.com",
+   "status": 404
+  },
+  {
+   "host": "itunes.apple.com",
+   "status": 200
+  },
+  {
+   "host": "query1.finance.yahoo.com",
+   "status": 200
+  },
+  {
+   "host": "www.aaii.com",
+   "status": 403
+  },
+  {
+   "host": "www.cboe.com",
+   "status": 200
+  },
+  {
+   "host": "www.econ.yale.edu",
+   "error": "ConnectionError: HTTPSConnectionPool(host='www.econ.yale.edu', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f2fe69bb9b0>:"
+  },
+  {
+   "host": "www.multpl.com",
+   "status": 200
+  },
+  {
+   "host": "www.okx.com",
+   "status": 200
+  }
+ ],
+ "bitbo": [
+  {
+   "endpoint": "mvrv-z-score",
+   "status": 401,
+   "content_type": "application/json",
+   "limit_headers": {},
+   "body": "{\"detail\":\"Unauthorized\"}",
+   "json_type": "dict",
+   "json_keys": [
+    "detail"
+   ],
+   "rows": null,
+   "last_row": null
+  },
+  {
+   "endpoint": "nupl-ratio",
+   "status": 401,
+   "content_type": "application/json",
+   "limit_headers": {},
+   "body": "{\"detail\":\"Unauthorized\"}",
+   "json_type": "dict",
+   "json_keys": [
+    "detail"
+   ],
+   "rows": null,
+   "last_row": null
+  },
+  {
+   "endpoint": "sopr",
+   "status": 401,
+   "content_type": "application/json",
+   "limit_headers": {},
+   "body": "{\"detail\":\"Unauthorized\"}",
+   "json_type": "dict",
+   "json_keys": [
+    "detail"
+   ],
+   "rows": null,
+   "last_row": null
+  }
+ ],
+ "candidates": [
+  {
+   "name": "FRED T10Y2Y",
+   "status": 200,
+   "sample": [
+    "2026-10-30",
+    "0.38"
+   ]
+  },
+  {
+   "name": "FRED T10Y3M",
+   "status": 200,
+   "sample": [
+    "2026-10-30",
+    "0.78"
+   ]
+  },
+  {
+   "name": "FRED BAMLH0A0HYM2",
+   "status": 200,
+   "sample": [
+    "2026-10-29",
+    "3.26"
+   ]
+  },
+  {
+   "name": "FRED BAA10Y",
+   "status": 200,
+   "sample": [
+    "2026-10-29",
+    "1.49"
+   ]
+  },
+  {
+   "name": "FRED STLFSI4",
+   "status": 200,
+   "sample": [
+    "2026-10-23",
+    "-0.5837"
+   ]
+  },
+  {
+   "name": "FRED NFCI",
+   "status": 200,
+   "sample": [
+    "2026-10-23",
+    "-0.487"
+   ]
+  },
+  {
+   "name": "FRED SAHMREALTIME",
+   "status": 200,
+   "sample": [
+    "2026-09-01",
+    "0.0"
+   ]
+  },
+  {
+   "name": "FRED VIXCLS",
+   "status": 200,
+   "sample": [
+    "2026-10-29",
+    "17.2"
+   ]
+  },
+  {
+   "name": "FRED T10YIE",
+   "status": 200,
+   "sample": [
+    "2026-10-30",
+    "2.34"
+   ]
+  },
+  {
+   "name": "FRED UNRATE",
+   "status": 200,
+   "sample": [
+    "2026-09-01",
+    "4.2"
+   ]
+  },
+  {
+   "name": "FRED ICSA",
+   "status": 200,
+   "sample": [
+    "2026-10-24",
+    "194000"
+   ]
+  },
+  {
+   "name": "FRED UMCSENT",
+   "status": 200,
+   "sample": [
+    "2026-09-01",
+    "48.1"
+   ]
+  },
+  {
+   "name": "FRED WALCL",
+   "status": 200,
+   "sample": [
+    "2026-10-28",
+    "6745635"
+   ]
+  },
+  {
+   "name": "FRED RRPONTSYD",
+   "status": 200,
+   "sample": [
+    "2026-10-30",
+    "4.375"
+   ]
+  },
+  {
+   "name": "FRED DTWEXBGS",
+   "status": 200,
+   "sample": [
+    "2026-10-23",
+    "121.3202"
+   ]
+  },
+  {
+   "name": "FRED M2SL",
+   "status": 200,
+   "sample": [
+    "2026-09-01",
+    "23413.9"
+   ]
+  },
+  {
+   "name": "FRED WILL5000PRFC",
+   "status": 400,
+   "sample": "Bad Request.  The series does not exist."
+  },
+  {
+   "name": "FRED GDP",
+   "status": 200,
+   "sample": [
+    "2026-07-01",
+    "33010.036"
+   ]
+  },
+  {
+   "name": "FRED FEDFUNDS",
+   "status": 200,
+   "sample": [
+    "2026-09-01",
+    "3.75"
+   ]
+  },
+  {
+   "name": "FRED CPIAUCSL (14 dernières, avec trous)",
+   "status": 200,
+   "sample": [
+    [
+     "2026-09-01",
+     "336.298"
+    ],
+    [
+     "2026-08-01",
+     "334.131"
+    ],
+    [
+     "2026-07-01",
+     "332.813"
+    ],
+    [
+     "2026-06-01",
+     "332.568"
+    ],
+    [
+     "2026-05-01",
+     "333.979"
+    ],
+    [
+     "2026-04-01",
+     "332.407"
+    ],
+    [
+     "2026-03-01",
+     "330.293"
+    ],
+    [
+     "2026-02-01",
+     "327.460"
+    ],
+    [
+     "2026-01-01",
+     "326.588"
+    ],
+    [
+     "2025-12-01",
+     "326.031"
+    ],
+    [
+     "2025-11-01",
+     "325.063"
+    ],
+    [
+     "2025-10-01",
+     "."
+    ],
+    [
+     "2025-09-01",
+     "324.245"
+    ],
+    [
+     "2025-08-01",
+     "323.291"
+    ]
+   ]
+  },
+  {
+   "name": "CoinMetrics CapMVRVCur",
+   "status": 200,
+   "sample": "1.427334068492219928"
+  },
+  {
+   "name": "CoinMetrics CapRealUSD",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'CapRealUSD\\' with frequency \\'1d\\' for asset \\'btc\\' is not availab'"
+  },
+  {
+   "name": "CoinMetrics CapMrktCurUSD",
+   "status": 200,
+   "sample": "1550350818606.801733519364651833"
+  },
+  {
+   "name": "CoinMetrics NVTAdj",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'NVTAdj\\' with frequency \\'1d\\' for asset \\'btc\\' is not available w'"
+  },
+  {
+   "name": "CoinMetrics NVTAdj90",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'NVTAdj90\\' with frequency \\'1d\\' for asset \\'btc\\' is not available'"
+  },
+  {
+   "name": "CoinMetrics AdrActCnt",
+   "status": 200,
+   "sample": "792938"
+  },
+  {
+   "name": "CoinMetrics TxCnt",
+   "status": 200,
+   "sample": "490222"
+  },
+  {
+   "name": "CoinMetrics TxTfrValAdjUSD",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'TxTfrValAdjUSD\\' with frequency \\'1d\\' for asset \\'btc\\' is not ava'"
+  },
+  {
+   "name": "CoinMetrics HashRate",
+   "status": 200,
+   "sample": "1062034895.6616789219578766640884"
+  },
+  {
+   "name": "CoinMetrics SplyCur",
+   "status": 200,
+   "sample": "20105810.49103769"
+  },
+  {
+   "name": "CoinMetrics SplyAct1yr",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'SplyAct1yr\\' with frequency \\'1d\\' for asset \\'btc\\' is not availab'"
+  },
+  {
+   "name": "CoinMetrics FeeTotUSD",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'FeeTotUSD\\' with frequency \\'1d\\' for asset \\'btc\\' is not availabl'"
+  },
+  {
+   "name": "CoinMetrics IssTotUSD",
+   "status": 200,
+   "sample": "34699315.836287565"
+  },
+  {
+   "name": "CoinMetrics RevUSD",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'RevUSD\\' with frequency \\'1d\\' for asset \\'btc\\' is not available w'"
+  },
+  {
+   "name": "CoinMetrics CapMVRVFF",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'CapMVRVFF\\' with frequency \\'1d\\' for asset \\'btc\\' is not availabl'"
+  },
+  {
+   "name": "CoinMetrics ROI30d",
+   "status": 200,
+   "sample": "-7.741216096101766"
+  },
+  {
+   "name": "CoinMetrics SOPR",
+   "status": 403,
+   "parse_error": "KeyError: 'data'; début='{\"error\":{\"type\":\"forbidden\",\"message\":\"Requested metric \\'SOPR\\' with frequency \\'1d\\' for asset \\'btc\\' is not available wit'"
+  },
+  {
+   "name": "DefiLlama stablecoins",
+   "status": 200,
+   "sample": {
+    "n": 427
+   }
+  },
+  {
+   "name": "OKX funding rate BTC",
+   "status": 200,
+   "sample": "0.0001000000000000"
+  },
+  {
+   "name": "OKX open interest BTC",
+   "status": 200,
+   "sample": "2657848019.85583472399472"
+  },
+  {
+   "name": "OKX long/short ratio",
+   "status": 200,
+   "sample": [
+    "1793462400000",
+    "2.66"
+   ]
+  },
+  {
+   "name": "Blockchain.com revenu mineurs",
+   "status": 200,
+   "sample": {
+    "x": 1793145600,
+    "y": 41266368.81850186
+   }
+  },
+  {
+   "name": "Mempool.space hashrate",
+   "status": 200,
+   "sample": 1.063936638931992e+21
+  },
+  {
+   "name": "CNN Fear & Greed",
+   "status": 200,
+   "sample": {
+    "score": 26.2386554621849,
+    "rating": "fear",
+    "timestamp": "2026-10-30T23:59:48+00:00",
+    "previous_close": 34.6,
+    "previous_1_week": 16.685714285714287,
+    "previous_1_month": 30.314285714285717,
+    "previous_1_year": 37.05714285714286
+   }
+  },
+  {
+   "name": "Stooq S&P 500 (CSV)",
+   "status": 404,
+   "sample": "<meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg h"
+  },
+  {
+   "name": "NY Fed probabilité récession",
+   "status": 200,
+   "sample": {
+    "octets": 612352,
+    "type": "application/vnd.ms-excel"
+   }
+  },
+  {
+   "name": "Treasury taux (CSV)",
+   "status": 200,
+   "sample": "Date,\"1 Mo\",\"1.5 Month\",\"2 Mo\",\"3 Mo\",\"4 Mo\",\"6 Mo\",\"1 Yr\",\"2 Yr\",\"3 Yr\",\"5 Yr\",\"7 Yr\",\"10 Yr\",\"20 Yr\",\"30 Yr\"\n10/30/2026,4.06,4.09,4.16,4.16,4.18,4.25,4.36,4.56,4.65,4.71,4.80,4.94,5.34,5.31\n10/29/20"
+  },
+  {
+   "name": "multpl Shiller PE",
+   "status": 200,
+   "sample": {
+    "len": 81363,
+    "current-value": false,
+    "debut": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<style>\n\n@font-face{font-family:concourse_ot_3_book;font-style:normal;font-weigh"
+   }
+  },
+  {
+   "name": "multpl S&P 500 PE",
+   "status": 200,
+   "sample": {
+    "len": 80916,
+    "current": true,
+    "debut": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<style>\n\n@font-face{font-family:concourse_ot_3_book;font-style:normal;font-weigh"
+   }
+  },
+  {
+   "name": "Shiller ie_data.xls (Yale)",
+   "status": 200,
+   "sample": {
+    "octets": 1628672,
+    "type": "application/vnd.ms-excel"
+   }
+  },
+  {
+   "name": "Shiller ie_data.xls (miroir)",
+   "status": 200,
+   "sample": {
+    "octets": 1623552,
+    "type": "application/vnd.ms-excel"
+   }
+  },
+  {
+   "name": "yfinance ^VIX3M",
+   "rows": 23,
+   "last": 20.78
+  },
+  {
+   "name": "yfinance ^SKEW",
+   "rows": 23,
+   "last": 149.76
+  },
+  {
+   "name": "yfinance ^VVIX",
+   "rows": 23,
+   "last": 106.43
+  },
+  {
+   "name": "yfinance ^TNX",
+   "rows": 23,
+   "last": 4.929
+  },
+  {
+   "name": "yfinance ^IRX",
+   "rows": 23,
+   "last": 3.973
+  },
+  {
+   "name": "yfinance ^FVX",
+   "rows": 23,
+   "last": 4.721
+  },
+  {
+   "name": "yfinance ^TYX",
+   "rows": 23,
+   "last": 5.309
+  },
+  {
+   "name": "yfinance HYG",
+   "rows": 23,
+   "last": 77.43
+  },
+  {
+   "name": "yfinance LQD",
+   "rows": 23,
+   "last": 104.27
+  },
+  {
+   "name": "yfinance IEF",
+   "rows": 23,
+   "last": 91.76
+  },
+  {
+   "name": "yfinance TLT",
+   "rows": 23,
+   "last": 81.84
+  },
+  {
+   "name": "yfinance RSP",
+   "rows": 23,
+   "last": 218.31
+  },
+  {
+   "name": "yfinance SPY",
+   "rows": 23,
+   "last": 755.72
+  },
+  {
+   "name": "yfinance XLY",
+   "rows": 23,
+   "last": 115.38
+  },
+  {
+   "name": "yfinance XLP",
+   "rows": 23,
+   "last": 89.42
+  },
+  {
+   "name": "yfinance ^RUT",
+   "rows": 23,
+   "last": 2811.84
+  },
+  {
+   "name": "yfinance ^STOXX50E",
+   "rows": 23,
+   "last": 6131.31
+  },
+  {
+   "name": "yfinance ^FCHI",
+   "rows": 23,
+   "last": 7969.42
+  },
+  {
+   "name": "yfinance EURUSD=X",
+   "rows": 22,
+   "last": 1.118
+  },
+  {
+   "name": "yfinance BTC-USD",
+   "rows": 32,
+   "last": 77560.773
+  },
+  {
+   "name": "yfinance GLD",
+   "rows": 23,
+   "last": 355.78
+  },
+  {
+   "name": "yfinance ^MOVE",
+   "rows": 22,
+   "last": 100.2
+  },
+  {
+   "name": "durée du test (s)",
+   "sample": 23
+  }
+ ],
+ "log_lines_total": 35,
+ "log": [
+  "[scrape] CAPE : élément #current-value absent de multpl.com",
+  "[shiller] téléchargement du classeur…",
+  "[shiller] CAPE lu : 30.8",
+  "[bourse] P/E: trailing_pe indisponible",
+  "[CBOE] Put/Call: could not convert string to float: '<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>'",
+  "[CBOE] Put/Call fallback: Error tokenizing data. C error: Expected 1 fields in line 14, saw 137",
+  "[Bitbo] mvrv-z-score: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] sopr: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] nupl-ratio: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] cdd: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] mayer-multiple: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] puell-multiple: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] nvt: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[Bitbo] monthly-rsi: HTTP 401 '{\"detail\":\"Unauthorized\"}' — aucune clé BITBO_API_KEY définie",
+  "[log:yfinance] $HYPE-USD: No data found, symbol may be delisted",
+  "/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pytrends/request.py:260: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, ",
+  "  df = df.fillna(False)",
+  "[build] 157 indicateurs frais en 23s",
+  "[build] signaux : {'bourse': 'neutral', 'crypto': 'neutral', 'matieres': 'sell'}  changements : aucun",
+  "/home/runner/work/marketsensor-backend/marketsensor-backend/indicators.py:1524: FutureWarning: The default fill_method='pad' in DataFrame.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=Non",
+  "  df   = pd.DataFrame(prices).pct_change().dropna()",
+  "[corr] Matrice 6×6 calculée depuis _PRICE_STORE",
+  "[div] 1 divergence(s) sur 18 actifs",
+  "[backtest] 36 résultats sur 18 actifs",
+  "[niveaux] hype : repli sur Hyperliquid",
+  "[niveaux] 6 actifs : ['btc', 'eth', 'gold', 'hype', 'sol', 'spx']",
+  "[suivi] 14 jours enregistrés, signaux évalués : {'1m': 0, '3m': 0, '6m': 0, '12m': 0}",
+  "[buffett] données récentes : conservées",
+  "[pelosi] données récentes : conservées",
+  "[analyste] analyse IA encore valable (aucun signal changé) : conservée"
+ ]
+}
